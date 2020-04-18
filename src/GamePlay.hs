@@ -1,7 +1,6 @@
 module GamePlay where
 
 import System.Random
-import System.IO
 -- import Control.Monad
 import Control.Monad.Writer
 
@@ -34,7 +33,6 @@ gamePlayState = GamePlayState {
 
 mainGamePlay :: IO ()
 mainGamePlay = do
-    hSetBuffering stdin NoBuffering
     stdGen <- getStdGen
     let gamePlayState = GamePlayState {
         playerState = (charizard, []),
@@ -91,7 +89,7 @@ turnAction turn (bs, mIdx) = do
     mapM_ putStrLn logs
     putStrLn "--------- Result ----------"
     printBattleState bs'
-    putStr "---------- Press Enter to continue ------------"
+    putStrLn "---------- Press Enter to continue ------------"
     _ <- getLine
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')

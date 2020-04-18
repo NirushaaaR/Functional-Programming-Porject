@@ -1,14 +1,14 @@
 module Main where
 
-import Lib
-
-import Data.Time
-import Control.Concurrent
+import GamePlay
+import System.IO
 
 main :: IO ()
 main = do
-    getCurrentTime >>= print
-    threadDelay (1000000 * 5)
-    getCurrentTime >>= print
+    hSetBuffering stdin NoBuffering
+    mainGamePlay
+    -- getCurrentTime >>= print
+    -- threadDelay (1000000 * 5)
+    -- getCurrentTime >>= print
 
      
