@@ -2,16 +2,16 @@ module Main where
 
 import GamePlay
 import System.IO
+import DrawScreen
+
 
 main :: IO ()
-main = do
-    hSetBuffering stdin NoBuffering
-    mainGamePlay
-    putStrLn "Game End..."
-    _ <- getLine
-    return ()
-    -- getCurrentTime >>= print
-    -- threadDelay (1000000 * 5)
-    -- getCurrentTime >>= print
+main = mainGamePlay
+    -- resetScreen
+    -- drawLargeSprite (0, 0) (getSprite "Charizard")
+    -- drawLargeSprite (0,90) (getSprite "Blastoise")
+    -- _ <- getLine
+    -- return ()
+
 
      

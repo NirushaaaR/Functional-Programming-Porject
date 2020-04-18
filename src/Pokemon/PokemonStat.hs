@@ -29,7 +29,6 @@ modifyStats (PokemonStats mh h a d s) (StatsModifer modH modA modD modS) =
         newSpd = mulfloor s (1.0+modS)
     in PokemonStats mh newHp newAtk newDef newSpd
 
-
 modifierChangeDescription :: StatsModifer -> [String]
 modifierChangeDescription (StatsModifer modH modA modD modS) =
     let descPair = zip [modH, modA, modD, modS] ["HP","Attack","Defense","Speed"]
@@ -38,6 +37,5 @@ modifierChangeDescription (StatsModifer modH modA modD modS) =
 changeDescription :: (Float, String) -> Maybe String
 changeDescription (modify, name) =
     if modify == 0 then Nothing
-    else if modify < 0 then Just ("Decrease "++name++" by "++ (show (round (modify * (-100))) ++ "%"))
-    else Just ("Increase "++name++" by "++ (show $ round (modify * 100)) ++ "%")
-
+    else if modify < 0 then Just ("Decrease "++name++" "++ (show (round (modify * (-100))) ++ "%"))
+    else Just ("Increase "++name++" "++ (show $ round (modify * 100)) ++ "%")

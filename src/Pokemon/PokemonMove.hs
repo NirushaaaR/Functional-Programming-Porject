@@ -17,3 +17,11 @@ data Move = Move {
     accuracy::Int,
     description:: String
 } deriving (Show, Read)
+
+-- use for writer to log data
+data MoveLogs = 
+    DamageLog { damageTaken::Int, targetLog::MoveTarget }
+    | StatsLog { change::String, targetLog::MoveTarget }
+    | StatusLog { statusAffect::Status, desc::String, targetLog::MoveTarget }
+    | NormalLog { log::String }
+    deriving (Show)

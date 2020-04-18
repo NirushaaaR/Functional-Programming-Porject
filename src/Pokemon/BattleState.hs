@@ -6,7 +6,7 @@ import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), takeDamage, changeStat, calculateMoveDamage)
 import Pokemon.PokemonStat (PokemonStats (..), StatsModifer (StatsModifer), modifierChangeDescription)
-import Pokemon.PokemonMove (Move (..), MoveEffect (..), MoveTarget (Self, Opponent))
+import Pokemon.PokemonMove (Move (..), MoveEffect (..), MoveTarget (Self, Opponent), MoveLogs (..))
 import Pokemon.Status
 import Pokemon.PokemonType
 import Util (mulceling, randomTrigger)
@@ -26,27 +26,25 @@ printBattleState (BattleState (at,atst) (df,dfst) _) = do
     putStrLn $ (name df)++" Hp "++ (show $ currentHp $ stats df)
     print dfst
 
-attackerUseMove :: BattleState -> Int -> Writer [String] BattleState
+attackerUseMove :: BattleState -> Int -> Writer [MoveLogs] BattleState
 attackerUseMove bs@(BattleState at _ _) moveIndex = do
     let move = (moves $ fst at) !! (moveIndex-1)
     (bs', move') <- checkBeforeAttack bs move
     case move' of   
-        Nothing -> do
-            tell [(name $ fst at)++" failed to use move"]
-            return bs'
+        Nothing -> return bs'
         Just m -> do
             let (Move mn effects macc _) = m
                 (BattleState at' df' g') = bs'
-            tell [(name $ fst at') ++ " use "++ mn]
+            tell [NormalLog $ (name $ fst at') ++ " use "++ mn]
             let (trigger, newGen) = randomTrigger g' (macc, 100)
                 newBs = (BattleState at' df' newGen)
             if trigger then foldM (\bstate f -> f bstate) newBs (map (flip actionByMoveEffect) effects)
             else do
-                tell ["But it missed..."]
+                tell [NormalLog $ "But it missed..."]
                 return newBs
 
 
-afterAllAttack :: BattleState -> Writer [String] BattleState
+afterAllAttack :: BattleState -> Writer [MoveLogs] BattleState
 afterAllAttack (BattleState (atker,atkerSt) (dfder, dfderSt) g) = do
     (atker') <- foldM (\at f -> f at) (atker) (map takeStatusEffect atkerSt)
     (dfder') <- foldM (\at f -> f at) (dfder) (map takeStatusEffect dfderSt)
@@ -54,20 +52,21 @@ afterAllAttack (BattleState (atker,atkerSt) (dfder, dfderSt) g) = do
 
 
 
-takeStatusEffect :: Status -> PokemonInfo -> Writer [String] PokemonInfo
+takeStatusEffect :: Status -> PokemonInfo -> Writer [MoveLogs] PokemonInfo
 takeStatusEffect st pkInfo = 
     if st == Poison || st == Burn then do
         let damage = mulceling (maxHp $ stats pkInfo) (1/8)
-        tell [(name pkInfo) ++ " take " ++ (show damage)++ " " ++(show st) ++ " damage"]
+        tell [StatusLog st ((name pkInfo)++" is hurt by "++(show st)) Self]
+        tell [DamageLog damage Self]
         return $ (takeDamage pkInfo damage)
     else return (pkInfo)
 
 
 
-actionByMoveEffect :: BattleState -> MoveEffect ->  Writer [String] BattleState
+actionByMoveEffect :: BattleState -> MoveEffect ->  Writer [MoveLogs] BattleState
 actionByMoveEffect bs (DealDamage p drawback) = do
     if Flying `elem` (snd $ defender bs) then do
-        tell ["Can't Deal Damage, Oppennet is Flying"]
+        tell [NormalLog $ "Can't Deal Damage, "++(show $ name $ fst $ defender bs)++" is Flying"]
         return bs
     else do
             let damage = calculateMoveDamage p (fst $ attacker bs) (fst $ defender bs)
@@ -85,10 +84,9 @@ actionByMoveEffect bs@(BattleState atker dfder g) (AttachStatus st rate target) 
     else return (BattleState atker dfder newGen)
         
 
-attackerAttack :: BattleState -> Int -> MoveTarget -> Writer [String] BattleState
+attackerAttack :: BattleState -> Int -> MoveTarget -> Writer [MoveLogs] BattleState
 attackerAttack (BattleState (atker, atkerSt) (dfder, dfderSt) g) damage target = do
-    if damage >= 0 then tell [(name atker) ++ " deal "++ (show damage) ++ " damage to "++ show target] 
-    else tell [(name atker) ++ " heal "++ (show damage) ++ " hp to "++ show target]
+    tell [DamageLog damage target] 
     case target of  
         Self -> do
             let newAtker = takeDamage atker damage
@@ -98,10 +96,10 @@ attackerAttack (BattleState (atker, atkerSt) (dfder, dfderSt) g) damage target =
             return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
 
 
-attackerChangeStats :: BattleState -> StatsModifer -> MoveTarget -> Writer [String] BattleState
+attackerChangeStats :: BattleState -> StatsModifer -> MoveTarget -> Writer [MoveLogs] BattleState
 attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier target = do
-    tell [(name atker) ++ " change "++(show target)++" status"]
-    tell (modifierChangeDescription modifier)
+    tell [NormalLog $ (name atker) ++ " change "++(show target)++" status"]
+    tell $ map (\s -> StatsLog s target) (modifierChangeDescription modifier)
     case target of  
         Self -> do
             let newAtker = changeStat atker modifier
@@ -112,18 +110,16 @@ attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier t
 
 
 
-attackerSetStatus :: BattleState -> Status -> MoveTarget -> Writer [String] BattleState
+attackerSetStatus :: BattleState -> Status -> MoveTarget -> Writer [MoveLogs] BattleState
 attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target =
     case target of  
         Self -> do
             let (newAtkerSt, isSet) = setStatus atkerSt st
-            if isSet then tell [(name atker) ++ " is " ++ (show st)]
-            else tell ["set "++(show st)++" to " ++ (show target)++" Failed"]
+            when (isSet) (tell [StatusLog st (show st) target])
             return (BattleState (atker, newAtkerSt) (dfder, dfderSt) g)
         Opponent -> do
             let (newDfderSt, isSet) = setStatus dfderSt st
-            if isSet then tell [(name dfder) ++ " is " ++ (show st)]
-            else tell ["set "++(show st)++ " to "++(show target)++" Failed"]
+            when (isSet) (tell [StatusLog st (show st) target])
             return (BattleState (atker, atkerSt) (dfder, newDfderSt) g)
 
 
@@ -132,17 +128,16 @@ canChooseMove (pkInfo, pkSt) =
     if Flying `elem` pkSt then False
     else True
 
-checkBeforeAttack :: BattleState -> Move -> Writer [String] (BattleState, Maybe Move)
+checkBeforeAttack :: BattleState -> Move -> Writer [MoveLogs] (BattleState, Maybe Move)
 checkBeforeAttack bs@(BattleState atker dfder g) move = do
     if Paralyzed `elem` (snd atker) then do
         let (trigger, newGen) = randomTrigger g (25, 100)
-        if trigger then tell [(name $ fst atker)++" is Paralyzed and can't move"]
-        else tell [(name $ fst atker)++" is Paralyzed but can still move"]
+        when (trigger) (tell [NormalLog $ (name $ fst atker)++" is Paralyzed and can't move"])
         return (BattleState atker dfder newGen, Nothing)
     else if Flying `elem` (snd atker) then do
         let flyAttackMove = Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky"
             filterOutFlyStatus = filter (\s -> s /= Flying) (snd atker)
-        tell [(name $ fst atker)++" is attacking From The Sky"]
+        tell [NormalLog $ (name $ fst atker)++" is attacking From The Sky"]
         return ((BattleState (fst atker, filterOutFlyStatus) dfder g), Just flyAttackMove)
     else return (bs, Just move)
 

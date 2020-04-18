@@ -8,8 +8,8 @@ import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
 import Pokemon.PokemonMove (Move (..))
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
-
-data AttackTurn = Player | Enemy deriving (Eq, Show, Read)
+import Util (AttackTurn (..))
+import DrawScreen (drawGameState)
 
 type PlayerMoveAndEnemyMove = (Int, Int)
 
@@ -85,13 +85,14 @@ turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
 turnAction turn (bs, mIdx) = do
     putStrLn $ "------------- "++ (show turn)++" Turn -----------------"
     (bs', logs) <- return $ runWriter $ attackerUseMove bs mIdx
-    mapM_ putStrLn logs
-    putStrLn "--------- Result ----------"
-    printBattleState bs'
-    putStrLn "---------- Press Enter to continue ------------"
-    _ <- getLine
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')
+    putStrLn "--------- Result ----------"
+    drawGameState (fst $ playerState newGs) (fst $ enemyState newGs) logs
+    putStrLn (take 120 $ cycle "=")
+    mapM_ print logs
+    putStrLn "---------- Press Enter to continue ------------"
+    _ <- getLine
     return newGs
 
 

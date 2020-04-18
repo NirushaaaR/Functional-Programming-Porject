@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 04e525b9e306fa4073ec614324ad4a4969dde1278035f947e00f0d8b47f65a74
+-- hash: da2b5f26bbf40752d0e2564c0bcc54fce5bfc9112ae293c291fad56068749f2d
 
 name:           project-functional
 version:        0.1.0.0
@@ -27,8 +27,8 @@ source-repository head
 
 library
   exposed-modules:
+      DrawScreen
       GamePlay
-      Lib
       Pokemon.BattleState
       Pokemon.PokemonInfo
       Pokemon.PokemonInstance
@@ -43,8 +43,9 @@ library
       src
   build-depends:
       base >=4.7 && <5
-    , mtl >=2.2.2 && <3
-    , random >=1.1 && <2
+    , ansi-terminal
+    , mtl
+    , random
   default-language: Haskell2010
 
 executable project-functional-exe
@@ -55,10 +56,11 @@ executable project-functional-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , mtl >=2.2.2 && <3
+      ansi-terminal
+    , base >=4.7 && <5
+    , mtl
     , project-functional
-    , random >=1.1 && <2
+    , random
   default-language: Haskell2010
 
 test-suite project-functional-test
@@ -72,6 +74,4 @@ test-suite project-functional-test
   build-depends:
       base >=4.7 && <5
     , project-functional
-    , mtl >=2.2.2 && <3
-    , random >=1.1 && <2
   default-language: Haskell2010

@@ -37,6 +37,7 @@ executables:
     - project-functional
     - random
     - mtl
+    - ansi-terminal
 
 tests:
   project-functional-test:
