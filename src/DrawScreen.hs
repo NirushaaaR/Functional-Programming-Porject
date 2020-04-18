@@ -35,7 +35,7 @@ drawGameState player enemy logs turn = do
 
 
 drawPlayerPokemon :: Int -> PokemonState -> [MoveLogs] -> IO Int
-drawPlayerPokemon startAt = drawInfoPokemon (startAt,0) (startAt+25, 65)
+drawPlayerPokemon startAt = drawInfoPokemon (startAt,0) (startAt+25, 75)
 
 
 drawEnemyPokemon :: PokemonState -> [MoveLogs] -> IO Int

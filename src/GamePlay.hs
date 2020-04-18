@@ -76,11 +76,14 @@ playBattle (GamePlayState player enemy g) (playerMv, enemyMv) firstTurn = do
             let (sndBs, sndTurn) = if firstTurn == Player then ((BattleState enemy' player' g', enemyMv), Enemy)
                                     else ((BattleState player' enemy' g', playerMv), Player)
             gs' <- turnAction sndTurn sndBs
-            -- return result
+            -- when everyone already end turn
             case playerWin gs' of 
                 Just m -> return $ Right m
-                Nothing -> return $ Left gs'
-
+                Nothing -> do
+                    gs'' <- endTurnAction gs'
+                    case playerWin gs'' of
+                        Just m -> return $ Right m
+                        Nothing -> return $ Left gs''
 
 
 turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
@@ -88,11 +91,19 @@ turnAction turn (bs, mIdx) = do
     (bs', logs) <- return $ runWriter $ attackerUseMove bs mIdx
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')
-    drawGameState (playerState newGs) (enemyState newGs) logs turn
-    -- mapM_ print logs
-    putStrLn "Press Enter to continue"
-    _ <- getLine
+    drawGameState' newGs logs turn
     return newGs
+
+
+endTurnAction :: GamePlayState -> IO GamePlayState
+endTurnAction (GamePlayState (player, playerSt) (enemy,enemySt) g) = do
+    (player', logs1) <- return $ runWriter $ foldM (\at f -> f at) (player) (map takeStatusEffect playerSt)
+    when (not $ null logs1) $ drawGameState' (GamePlayState (player', playerSt) (enemy,enemySt) g) logs1 Player
+    (enemy', logs2) <- return $ runWriter $ foldM (\at f -> f at) (enemy) (map takeStatusEffect enemySt)
+    let newGs = (GamePlayState (player', playerSt) (enemy', enemySt) g)
+    when (not $ null logs2) $ drawGameState' newGs logs2 Enemy
+    return newGs
+
 
 
 chooseMove :: PokemonState -> PokemonState -> StdGen -> IO (PlayerMoveAndEnemyMove, StdGen)
@@ -122,6 +133,13 @@ getPlayerChoosenMove (minRange, maxRange) = do
 
 strToInt :: String -> Maybe Int
 strToInt = readMaybe
+
+drawGameState' :: GamePlayState -> [MoveLogs] -> AttackTurn -> IO ()
+drawGameState' gs mlogs turn = do
+    drawGameState (playerState gs) (enemyState gs) mlogs turn
+    putStrLn "Press Enter to continue"
+    _ <- getLine
+    return ()
 
 -- implement while loop
 -- if Nothing Will Continue Doing, if Just a will stop with results a

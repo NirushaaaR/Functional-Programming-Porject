@@ -44,14 +44,6 @@ attackerUseMove bs@(BattleState at _ _) moveIndex = do
                 return newBs
 
 
-afterAllAttack :: BattleState -> Writer [MoveLogs] BattleState
-afterAllAttack (BattleState (atker,atkerSt) (dfder, dfderSt) g) = do
-    (atker') <- foldM (\at f -> f at) (atker) (map takeStatusEffect atkerSt)
-    (dfder') <- foldM (\at f -> f at) (dfder) (map takeStatusEffect dfderSt)
-    return (BattleState (atker',atkerSt) (dfder', dfderSt) g)
-
-
-
 takeStatusEffect :: Status -> PokemonInfo -> Writer [MoveLogs] PokemonInfo
 takeStatusEffect st pkInfo = 
     if st == Poison || st == Burn then do
