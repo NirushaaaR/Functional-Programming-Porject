@@ -98,7 +98,6 @@ attackerAttack (BattleState (atker, atkerSt) (dfder, dfderSt) g) damage target =
 
 attackerChangeStats :: BattleState -> StatsModifer -> MoveTarget -> Writer [MoveLogs] BattleState
 attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier target = do
-    tell [NormalLog $ (name atker) ++ " change "++(show target)++" status"]
     tell $ map (\s -> StatsLog s target) (modifierChangeDescription modifier)
     case target of  
         Self -> do
@@ -111,16 +110,14 @@ attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier t
 
 
 attackerSetStatus :: BattleState -> Status -> MoveTarget -> Writer [MoveLogs] BattleState
-attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target =
-    case target of  
-        Self -> do
-            let (newAtkerSt, isSet) = setStatus atkerSt st
-            when (isSet) (tell [StatusLog st (show st) target])
-            return (BattleState (atker, newAtkerSt) (dfder, dfderSt) g)
-        Opponent -> do
-            let (newDfderSt, isSet) = setStatus dfderSt st
-            when (isSet) (tell [StatusLog st (show st) target])
-            return (BattleState (atker, atkerSt) (dfder, newDfderSt) g)
+attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target = do
+    (newBs, isSet', pkName) <- return $ case target of  
+        Self -> let (newAtkerSt, isSet) = setStatus atkerSt st
+            in (BattleState (atker, newAtkerSt) (dfder, dfderSt) g, isSet, name atker)
+        Opponent -> let (newDfderSt, isSet) = setStatus dfderSt st
+            in (BattleState (atker, atkerSt) (dfder, newDfderSt) g, isSet, name dfder)
+    when (isSet') (tell [StatusLog st (pkName++(statusAttachedDescription st)) target])
+    return newBs
 
 
 canChooseMove :: PokemonState -> Bool
@@ -137,7 +134,7 @@ checkBeforeAttack bs@(BattleState atker dfder g) move = do
     else if Flying `elem` (snd atker) then do
         let flyAttackMove = Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky"
             filterOutFlyStatus = filter (\s -> s /= Flying) (snd atker)
-        tell [NormalLog $ (name $ fst atker)++" is attacking From The Sky"]
+        tell [NormalLog $ (name $ fst atker)++" is hovering above the sky"]
         return ((BattleState (fst atker, filterOutFlyStatus) dfder g), Just flyAttackMove)
     else return (bs, Just move)
 

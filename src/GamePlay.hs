@@ -5,11 +5,12 @@ import Text.Read
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
-import Pokemon.PokemonMove (Move (..))
+import Pokemon.PokemonMove (Move (..), MoveLogs (..), MoveTarget (..))
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
 import Util (AttackTurn (..))
 import DrawScreen (drawGameState)
+
 
 type PlayerMoveAndEnemyMove = (Int, Int)
 
@@ -39,6 +40,7 @@ mainGamePlay = do
         gamePlayGen = stdGen
     }
     putStrLn $ "Battle Between" ++ (name $ fst $ playerState gamePlayState) ++ " and " ++ (name $ fst $ enemyState gamePlayState)
+    drawGameState (playerState gamePlayState) (enemyState gamePlayState) [] Player
     win <- continueGamePlay gamePlayState
     if win then putStrLn "Player Win!!"
     else putStrLn "Player Lose!!"
@@ -83,15 +85,12 @@ playBattle (GamePlayState player enemy g) (playerMv, enemyMv) firstTurn = do
 
 turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
 turnAction turn (bs, mIdx) = do
-    putStrLn $ "------------- "++ (show turn)++" Turn -----------------"
     (bs', logs) <- return $ runWriter $ attackerUseMove bs mIdx
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')
-    putStrLn "--------- Result ----------"
-    drawGameState (fst $ playerState newGs) (fst $ enemyState newGs) logs
-    putStrLn (take 120 $ cycle "=")
-    mapM_ print logs
-    putStrLn "---------- Press Enter to continue ------------"
+    drawGameState (playerState newGs) (enemyState newGs) logs turn
+    -- mapM_ print logs
+    putStrLn "Press Enter to continue"
     _ <- getLine
     return newGs
 
@@ -123,7 +122,6 @@ getPlayerChoosenMove (minRange, maxRange) = do
 
 strToInt :: String -> Maybe Int
 strToInt = readMaybe
-
 
 -- implement while loop
 -- if Nothing Will Continue Doing, if Just a will stop with results a
