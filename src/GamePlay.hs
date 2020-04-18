@@ -1,14 +1,13 @@
 module GamePlay where
 
 import System.Random
--- import Control.Monad
+import Text.Read
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
 import Pokemon.PokemonMove (Move (..))
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
-import Util (randomNumInRange)
 
 data AttackTurn = Player | Enemy deriving (Eq, Show, Read)
 
@@ -103,21 +102,26 @@ chooseMove playerPk enemyPk stdGen = do
     playerMove <- if playerChooseMove then do
                     putStr "Choose Your Move: "
                     putStrLn $ showPokemonMove (moves $ fst playerPk)
-                    getPlayerChoosenMove
+                    getPlayerChoosenMove (1,3)
                   else return 0
     -- choose Move for Enemy
-    let (enemyMove, stdGen') = randomNumInRange stdGen (1, (length $ moves $ fst $ enemyPk))
+    let (enemyMove, stdGen') = randomR (1, (length $ moves $ fst $ enemyPk)) stdGen 
     return ((playerMove, enemyMove), stdGen')
 
 
 showPokemonMove :: [Move] -> String
 showPokemonMove moveList = concat $ map (\(m, index) -> "  ["++(show index)++"] "++ moveName m ) (zip moveList [1..])
 
-getPlayerChoosenMove :: IO Int
-getPlayerChoosenMove = do
+getPlayerChoosenMove :: (Int,Int) -> IO Int
+getPlayerChoosenMove (minRange, maxRange) = do
     line <- getLine
-    return (read line :: Int) 
+    case strToInt line of
+        Nothing -> getPlayerChoosenMove (minRange, maxRange)
+        Just n -> if n < minRange || n > maxRange then getPlayerChoosenMove (minRange, maxRange) else return n
 
+
+strToInt :: String -> Maybe Int
+strToInt = readMaybe
 
 
 -- implement while loop

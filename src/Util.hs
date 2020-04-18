@@ -21,12 +21,6 @@ randomTrigger stdGen (chance, inChance) =
         else ((randNum `mod` (inChance+1)) <= chance, newGen)
 
 
-randomNumInRange :: StdGen -> (Int, Int) -> (Int, StdGen)
-randomNumInRange stdGen (minNum, maxNum) =
-    let (randNum, newGen) = random stdGen :: (Int, StdGen)
-    in ( ( (randNum `mod` ((maxNum+1) - minNum)) + minNum) , newGen )
-
-
 
     
     
