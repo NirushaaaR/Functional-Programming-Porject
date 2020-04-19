@@ -1,8 +1,7 @@
 module Main where
 
 import GamePlay
-import System.IO
-import DrawScreen
+-- import DrawScreen
 
 
 main :: IO ()
