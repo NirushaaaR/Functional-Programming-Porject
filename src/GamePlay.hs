@@ -21,16 +21,10 @@ data GamePlayState = GamePlayState {
     gamePlayGen :: StdGen
 } deriving (Show, Read)
 
-isPlayerWin :: GamePlayState -> Maybe Bool
-isPlayerWin (GamePlayState p e g) =
-    if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
-    else Just (isDead $ fst e)
-
-
--- playerWinOrGameNotEnd :: GamePlayState -> Either GamePlayState Bool
--- isPlayerWin (GamePlayState p e g) =
---     if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
---     else Just (isDead $ fst e)
+playerWinOrGameNotEnd :: GamePlayState -> Either GamePlayState Bool
+playerWinOrGameNotEnd gs@(GamePlayState p e g) =
+    if not ((isDead $ fst p ) || (isDead $ fst e)) then Left gs
+    else Right (isDead $ fst e)
 
 
 mainGamePlay :: IO ()
@@ -66,50 +60,37 @@ continueGamePlay (GamePlayState player enemy g) = do
 
 
 playBattle :: GamePlayState -> PlayerMoveAndEnemyMove -> AttackTurn -> IO (Either GamePlayState Bool)
-playBattle (GamePlayState player enemy g) (playerMv, enemyMv) firstTurn = do
+playBattle gs (playerMv, enemyMv) firstTurn = 
     -- play first turn
-    gs@(GamePlayState player' enemy' g') <- if firstTurn == Player then playerAction (BattleState player enemy g, playerMv)
-                                            else enemyAction (BattleState enemy player g, enemyMv)
-    case isPlayerWin gs of 
-        Just m -> return $ Right m
-        -- if not end yet play seccond turn
-        Nothing -> do
-            gs' <-  if firstTurn == Player then enemyAction (BattleState enemy' player' g', enemyMv)
-                    else playerAction (BattleState player' enemy' g', playerMv)
-            -- when everyone already end turn
-            case isPlayerWin gs' of 
-                Just m -> return $ Right m
-                Nothing -> do
-                    gs'' <- endTurnAction gs'
-                    case isPlayerWin gs'' of
-                        Just m -> return $ Right m
-                        Nothing -> return $ Left gs''
+    if firstTurn == Player then foldM (\currentGs f-> f currentGs) (Left gs) [(playerAction playerMv), (enemyAction enemyMv), endTurnAction]
+    else foldM (\currentGs f -> f currentGs) (Left gs) [(enemyAction enemyMv), (playerAction playerMv), endTurnAction]
 
 
-playerAction :: (BattleState, Int) -> IO GamePlayState
-playerAction = turnAction Player 
+playerAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+playerAction _ (Right w) = return $ Right w 
+playerAction moveIndex (Left gs) = turnAction Player moveIndex (BattleState (playerState gs) (enemyState gs) (gamePlayGen gs))
 
-enemyAction :: (BattleState, Int) -> IO GamePlayState
-enemyAction = turnAction Enemy      
+enemyAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+enemyAction _ (Right w) = return $ Right w      
+enemyAction moveIndex (Left gs) = turnAction Enemy moveIndex (BattleState (enemyState gs) (playerState gs) (gamePlayGen gs))
 
-turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
-turnAction turn (bs, mIdx) = do
-    (bs', logs) <- return $ runWriter $ attackerUseMove bs mIdx
+turnAction :: AttackTurn -> Int -> BattleState -> IO (Either GamePlayState Bool)
+turnAction turn moveIndex bs = do
+    (bs', logs) <- return $ runWriter $ attackerUseMove bs moveIndex
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')
     drawGameState' newGs logs turn
-    return newGs
+    return $ playerWinOrGameNotEnd newGs
 
-
-endTurnAction :: GamePlayState -> IO GamePlayState
-endTurnAction (GamePlayState (player, playerSt) (enemy,enemySt) g) = do
+endTurnAction :: Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+endTurnAction (Right w) = return $ Right w
+endTurnAction (Left (GamePlayState (player, playerSt) (enemy,enemySt) g)) = do
     (player', logs1) <- return $ runWriter $ foldM (\at f -> f at) (player) (map takeStatusEffect playerSt)
     when (not $ null logs1) $ drawGameState' (GamePlayState (player', playerSt) (enemy,enemySt) g) logs1 Player
     (enemy', logs2) <- return $ runWriter $ foldM (\at f -> f at) (enemy) (map takeStatusEffect enemySt)
     let newGs = (GamePlayState (player', playerSt) (enemy', enemySt) g)
     when (not $ null logs2) $ drawGameState' newGs logs2 Enemy
-    return newGs
-
+    return $ playerWinOrGameNotEnd newGs
 
 
 chooseMove :: PokemonState -> PokemonState -> StdGen -> IO (PlayerMoveAndEnemyMove, StdGen)

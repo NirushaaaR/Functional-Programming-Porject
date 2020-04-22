@@ -80,21 +80,17 @@ electroBall = Move {
 }
 voltTackle = Move {
     moveName="Volt Tackle",
-    moveEffect=[(DealDamage 40 0.5)],
+    moveEffect=[(DealDamage 45 0.5)],
     accuracy=70,
     description="The user throws an electrified tackle. It will hurts the user."
 }
 thunderWave = Move {
     moveName="Thuner Wave",
     moveEffect=[(AttachStatus Paralyzed (1,1)) Opponent],
-    accuracy=75,
+    accuracy=70,
     description="A weak electric shock that is sure to cause paralysis if it hits."
 }
 -- pikachu--
-
-
-
-
 
 ------ sprite --------
 getSprite :: String -> [String]

@@ -19,13 +19,6 @@ data BattleState = BattleState {
     gen :: StdGen
 } deriving (Show, Read)
 
-printBattleState :: BattleState -> IO ()
-printBattleState (BattleState (at,atst) (df,dfst) _) = do
-    putStrLn $ (name at)++" Hp "++ (show $ currentHp $ stats at)
-    print atst
-    putStrLn $ (name df)++" Hp "++ (show $ currentHp $ stats df)
-    print dfst
-
 attackerUseMove :: BattleState -> Int -> Writer [Log] BattleState
 attackerUseMove bs@(BattleState at _ _) moveIndex = do
     let move = (moves $ fst at) !! (moveIndex-1)
@@ -65,16 +58,16 @@ actionByMoveEffect bs (DealDamage p drawback) = do
             bs2 <- attackerAttack bs damage Opponent
             if drawback /= 0.0 then do
                 let drawbackDamage = mulceling damage drawback
-                attackerAttack bs drawbackDamage Self
+                attackerAttack bs2 drawbackDamage Self
             else return bs2
             where
                 attackerAttack :: BattleState -> Int -> MoveTarget -> Writer [Log] BattleState
                 attackerAttack (BattleState (atker, atkerSt) (dfder, dfderSt) g) damage target = do
                     tell [DamageLog damage target] 
                     case target of  
-                        Self -> let newAtker = takeDamage atker damage
+                        Self -> let newAtker = takeDamage atker damage 
                             in return (BattleState (newAtker, atkerSt) (dfder, dfderSt) g)
-                        Opponent -> let newDfder = takeDamage dfder damage
+                        Opponent -> let newDfder = takeDamage dfder damage 
                             in return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
 
 -- Attacker use move that ChangeStats
@@ -84,12 +77,10 @@ actionByMoveEffect bs (ChangeStats mod target) = attackerChangeStats bs mod targ
         attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier target = do
             tell $ map (\s -> StatsLog s target) (modifierChangeDescription modifier)
             case target of  
-                Self -> do
-                    let newAtker = changeStat atker modifier
-                    return (BattleState (newAtker, atkerSt) (dfder, dfderSt) g)
-                Opponent -> do
-                    let newDfder = changeStat dfder modifier
-                    return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
+                Self -> let newAtker = changeStat atker modifier 
+                    in return (BattleState (newAtker, atkerSt) (dfder, dfderSt) g)
+                Opponent -> let newDfder = changeStat dfder modifier 
+                    in return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
 
 -- Attacker use move that AttachStatus
 actionByMoveEffect bs@(BattleState atker dfder g) (AttachStatus st rate target) = do
