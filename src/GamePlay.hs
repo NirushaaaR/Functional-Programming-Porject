@@ -113,7 +113,7 @@ chooseMove playerPk enemyPk stdGen = do
     playerMove <- if playerChooseMove then do
                     putStr "Choose Your Move: "
                     putStrLn $ showPokemonMove (moves $ fst playerPk)
-                    getPlayerChoosenMove (1,3)
+                    getPlayerChoosenMove (1,length $ moves $ fst playerPk)
                   else return 0
     -- choose Move for Enemy
     let (enemyMove, stdGen') = randomR (1, (length $ moves $ fst $ enemyPk)) stdGen 

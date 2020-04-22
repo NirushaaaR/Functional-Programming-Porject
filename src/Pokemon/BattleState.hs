@@ -121,8 +121,10 @@ checkBeforeAttack :: BattleState -> Move -> Writer [MoveLogs] (BattleState, Mayb
 checkBeforeAttack bs@(BattleState atker dfder g) move = do
     if Paralyzed `elem` (snd atker) then do
         let (trigger, newGen) = randomTrigger g (25, 100)
-        when (trigger) (tell [NormalLog $ (name $ fst atker)++" is Paralyzed and can't move"])
-        return (BattleState atker dfder newGen, Nothing)
+        if trigger then do
+            (tell [NormalLog $ (name $ fst atker)++" is Paralyzed and can't move"])
+            return (BattleState atker dfder newGen, Nothing)
+        else return (bs, Just move)
     else if Flying `elem` (snd atker) then do
         let flyAttackMove = Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky"
             filterOutFlyStatus = filter (\s -> s /= Flying) (snd atker)

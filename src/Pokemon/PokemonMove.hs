@@ -45,8 +45,6 @@ splitLogs logs turn = partition isPlayerLog logs
                         StatusLog _ _ target -> target == Opponent
                         NormalLog _ -> False
 
-
-
 moveLogToStr :: MoveLogs -> String
 moveLogToStr (DamageLog damage _) = 
     if damage < 0 then "Heal "++(show damage)++" Hp"
