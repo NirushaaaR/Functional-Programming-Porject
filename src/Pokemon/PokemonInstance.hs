@@ -26,7 +26,7 @@ flameThrowerMove = Move {
 }
 swordDanceMove = Move { 
     moveName="SwordDance", 
-    moveEffect=[(ChangeStats (StatsModifer 0 0.5 0 0) 10 Self)],
+    moveEffect=[(ChangeStats (StatsModifer 0 0.5 0 0) Self)],
     accuracy=100, 
     description="A move that increase user attack by 1.5 percent"
 }
@@ -53,7 +53,7 @@ hydroPumpMove = Move {
 }
 shellSmashMove = Move {
     moveName="Shell Smash",
-    moveEffect=[(ChangeStats (StatsModifer 0 0.5 (-0.5) 0.5) 10 Self)],
+    moveEffect=[(ChangeStats (StatsModifer 0 0.5 (-0.5) 0.5) Self)],
     accuracy=100,
     description="The user breaks its shell, which lowers Defense stat but raises its Attack and Speed stats"
 }

@@ -10,7 +10,7 @@ data MoveTarget = Self | Opponent deriving (Show, Read, Eq)
 
 data MoveEffect = 
     DealDamage { power::Int, drawbackPercent:: Float }
-    | ChangeStats { modifier::StatsModifer, turn::Int, moveTarget::MoveTarget } 
+    | ChangeStats { modifier::StatsModifer, moveTarget::MoveTarget } 
     | AttachStatus { attachedStatus::Status, successRate::(Int,Int), moveTarget::MoveTarget }
     deriving (Show, Read)
 
@@ -22,7 +22,7 @@ data Move = Move {
 } deriving (Show, Read)
 
 -- use for writer to log data
-data MoveLogs = 
+data Log = 
     DamageLog { damageTaken::Int, targetLog::MoveTarget }
     | StatsLog { change::String, targetLog::MoveTarget }
     | StatusLog { statusAffect::Status, desc::String, targetLog::MoveTarget }
@@ -30,7 +30,7 @@ data MoveLogs =
     deriving (Show)
 
 
-splitLogs :: [MoveLogs] -> AttackTurn -> ([MoveLogs], [MoveLogs])
+splitLogs :: [Log] -> AttackTurn -> ([Log], [Log])
 splitLogs logs turn = partition isPlayerLog logs
     where
     isPlayerLog log =
@@ -45,10 +45,10 @@ splitLogs logs turn = partition isPlayerLog logs
                         StatusLog _ _ target -> target == Opponent
                         NormalLog _ -> False
 
-moveLogToStr :: MoveLogs -> String
-moveLogToStr (DamageLog damage _) = 
+logToStr :: Log -> String
+logToStr (DamageLog damage _) = 
     if damage < 0 then "Heal "++(show damage)++" Hp"
     else "Take "++(show damage)++" damage"
-moveLogToStr (StatsLog change' target) = (show target) ++ ": "++change'
-moveLogToStr (StatusLog statusAffect desc' _) = desc'
-moveLogToStr (NormalLog l) = l
+logToStr (StatsLog change' target) = (show target) ++ ": "++change'
+logToStr (StatusLog statusAffect desc' _) = desc'
+logToStr (NormalLog l) = l

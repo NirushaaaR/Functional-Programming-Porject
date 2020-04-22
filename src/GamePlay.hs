@@ -5,10 +5,11 @@ import Text.Read
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
-import Pokemon.PokemonMove (Move (..), MoveLogs (..), MoveTarget (..))
+import Pokemon.PokemonMove (Move (..), Log (..), MoveTarget (..))
+import Pokemon.PokemonStat (speed)
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
-import Util (AttackTurn (..))
+import Util (AttackTurn (..), randomTrigger)
 import DrawScreen (drawGameState)
 
 
@@ -20,10 +21,16 @@ data GamePlayState = GamePlayState {
     gamePlayGen :: StdGen
 } deriving (Show, Read)
 
-playerWin :: GamePlayState -> Maybe Bool
-playerWin (GamePlayState p e g) =
+isPlayerWin :: GamePlayState -> Maybe Bool
+isPlayerWin (GamePlayState p e g) =
     if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
     else Just (isDead $ fst e)
+
+
+-- playerWinOrGameNotEnd :: GamePlayState -> Either GamePlayState Bool
+-- isPlayerWin (GamePlayState p e g) =
+--     if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
+--     else Just (isDead $ fst e)
 
 
 mainGamePlay :: IO ()
@@ -47,7 +54,7 @@ continueGamePlay (GamePlayState player enemy g) = do
     (chosenMove, g') <- chooseMove player enemy g
 
     -- determine who go first
-    (playerFst, g'') <- return $ playerAttackFirst player enemy g'
+    (playerFst, g'') <- return $ checkAttackFirst player enemy g'
     
     -- play battle
     eitherGameEnd <- playBattle (GamePlayState player enemy g'') chosenMove (if playerFst then Player else Enemy)
@@ -61,25 +68,29 @@ continueGamePlay (GamePlayState player enemy g) = do
 playBattle :: GamePlayState -> PlayerMoveAndEnemyMove -> AttackTurn -> IO (Either GamePlayState Bool)
 playBattle (GamePlayState player enemy g) (playerMv, enemyMv) firstTurn = do
     -- play first turn
-    let fstBs = if firstTurn == Player then (BattleState player enemy g, playerMv)
-             else (BattleState enemy player g, enemyMv)
-    gs@(GamePlayState player' enemy' g') <- turnAction firstTurn fstBs
-    case playerWin gs of 
+    gs@(GamePlayState player' enemy' g') <- if firstTurn == Player then playerAction (BattleState player enemy g, playerMv)
+                                            else enemyAction (BattleState enemy player g, enemyMv)
+    case isPlayerWin gs of 
         Just m -> return $ Right m
         -- if not end yet play seccond turn
         Nothing -> do
-            let (sndBs, sndTurn) = if firstTurn == Player then ((BattleState enemy' player' g', enemyMv), Enemy)
-                                    else ((BattleState player' enemy' g', playerMv), Player)
-            gs' <- turnAction sndTurn sndBs
+            gs' <-  if firstTurn == Player then enemyAction (BattleState enemy' player' g', enemyMv)
+                    else playerAction (BattleState player' enemy' g', playerMv)
             -- when everyone already end turn
-            case playerWin gs' of 
+            case isPlayerWin gs' of 
                 Just m -> return $ Right m
                 Nothing -> do
                     gs'' <- endTurnAction gs'
-                    case playerWin gs'' of
+                    case isPlayerWin gs'' of
                         Just m -> return $ Right m
                         Nothing -> return $ Left gs''
 
+
+playerAction :: (BattleState, Int) -> IO GamePlayState
+playerAction = turnAction Player 
+
+enemyAction :: (BattleState, Int) -> IO GamePlayState
+enemyAction = turnAction Enemy      
 
 turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
 turnAction turn (bs, mIdx) = do
@@ -107,39 +118,37 @@ chooseMove playerPk enemyPk stdGen = do
     playerChooseMove <- return $ canChooseMove playerPk
     playerMove <- if playerChooseMove then do
                     putStr "Choose Your Move: "
-                    putStrLn $ showPokemonMove (moves $ fst playerPk)
-                    getPlayerChoosenMove (1,length $ moves $ fst playerPk)
+                    showPokemonMove (moves $ fst playerPk)
+                    choosePlayerMove (1,length $ moves $ fst playerPk)
                   else return 0
     -- choose Move for Enemy
     let (enemyMove, stdGen') = randomR (1, (length $ moves $ fst $ enemyPk)) stdGen 
     return ((playerMove, enemyMove), stdGen')
 
 
-showPokemonMove :: [Move] -> String
-showPokemonMove moveList = concat $ map (\(m, index) -> "  ["++(show index)++"] "++ moveName m ) (zip moveList [1..])
+showPokemonMove :: [Move] -> IO ()
+showPokemonMove moveList = do
+    putStrLn $ concat $ map (\(m, index) -> "  ["++(show index)++"] "++ moveName m ) (zip moveList [1..])
 
-getPlayerChoosenMove :: (Int,Int) -> IO Int
-getPlayerChoosenMove (minRange, maxRange) = do
+
+choosePlayerMove :: (Int,Int) -> IO Int
+choosePlayerMove (minRange, maxRange) = do
     line <- getLine
-    case strToInt line of
-        Nothing -> getPlayerChoosenMove (minRange, maxRange)
-        Just n -> if n < minRange || n > maxRange then getPlayerChoosenMove (minRange, maxRange) else return n
+    case readMaybe line :: Maybe Int of
+        Nothing -> choosePlayerMove (minRange, maxRange)
+        Just n -> if n < minRange || n > maxRange then choosePlayerMove (minRange, maxRange) else return n
 
-
-strToInt :: String -> Maybe Int
-strToInt = readMaybe
-
-drawGameState' :: GamePlayState -> [MoveLogs] -> AttackTurn -> IO ()
-drawGameState' gs mlogs turn = do
-    drawGameState (playerState gs) (enemyState gs) mlogs turn
+drawGameState' :: GamePlayState -> [Log] -> AttackTurn -> IO ()
+drawGameState' (GamePlayState player enemy _) logs turn = do
+    drawGameState player enemy logs turn
     putStrLn "Press Enter to continue"
     _ <- getLine
     return ()
 
--- implement while loop
--- if Nothing Will Continue Doing, if Just a will stop with results a
--- battleCheck :: Monad m => GamePlayState -> m (Maybe Bool) -> m Bool
--- battleCheck gs action = do
---     condition <- action gs
---     case condition of Nothing -> (loopMaybe action)
---                       Just m -> return m
+-- see if player have a chance to attack first
+checkAttackFirst :: PokemonState -> PokemonState -> StdGen -> (Bool, StdGen)
+checkAttackFirst p1@(pk1, _) p2@(pk2, _) g =
+    -- if speed equal random 50 : 50 
+    if (speed $ stats pk1) == (speed $ stats pk2) then
+        let (trigger, newGen) = randomTrigger g (50,100) in (trigger, newGen)
+    else ((speed $ stats pk1) > (speed $ stats pk2), g)

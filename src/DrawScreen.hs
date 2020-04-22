@@ -4,7 +4,7 @@ import System.IO
 import System.Console.ANSI
 
 import Pokemon.PokemonInfo (PokemonInfo (..))
-import Pokemon.PokemonMove (MoveLogs (..), moveLogToStr, splitLogs)
+import Pokemon.PokemonMove (Log (..), logToStr, splitLogs)
 import Util (AttackTurn (..))
 import Pokemon.PokemonStat (currentHp, maxHp)
 import Pokemon.BattleState (PokemonState)
@@ -30,7 +30,7 @@ drawLargeTextWithColor color pos sprite  = do
     setSGR [Reset]
     return size
 
-drawGameState :: PokemonState -> PokemonState -> [MoveLogs] -> AttackTurn -> IO ()
+drawGameState :: PokemonState -> PokemonState -> [Log] -> AttackTurn -> IO ()
 drawGameState player enemy logs turn = do
     resetScreen
     let (playerLogs, enemyLogs) = splitLogs logs turn
@@ -41,18 +41,18 @@ drawGameState player enemy logs turn = do
     return ()
 
 
-drawPlayerPokemon :: Int -> PokemonState -> [MoveLogs] -> IO Int
+drawPlayerPokemon :: Int -> PokemonState -> [Log] -> IO Int
 drawPlayerPokemon startAt = drawInfoPokemon (startAt,0) (startAt+25, 75)
 
 
-drawEnemyPokemon :: PokemonState -> [MoveLogs] -> IO Int
+drawEnemyPokemon :: PokemonState -> [Log] -> IO Int
 drawEnemyPokemon = drawInfoPokemon (0,90) (10,40)
 
 
-drawInfoPokemon :: (Int,Int) -> (Int,Int) -> PokemonState -> [MoveLogs] -> IO Int
+drawInfoPokemon :: (Int,Int) -> (Int,Int) -> PokemonState -> [Log] -> IO Int
 drawInfoPokemon spritePos descPos (pkInfo, pkStatus) logs = do
     let desc = (name pkInfo)++" Hp: "++(show $ currentHp $ stats pkInfo)++"/"++(show $ maxHp $ stats pkInfo)++" "++(show pkStatus)
-        logsString = map moveLogToStr logs
+        logsString = map logToStr logs
     drawLargeText descPos ( desc:" ":logsString )
     size <- drawLargeText spritePos ( (getSprite $ name pkInfo) )
     return size
