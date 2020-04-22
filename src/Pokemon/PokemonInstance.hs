@@ -73,20 +73,20 @@ pikachu = PokemonInfo {
 }
 electroBall = Move {
     moveName="Electro Ball",
-    moveEffect=[(DealDamage 30 0.0)],
+    moveEffect=[(DealDamage 25 0.0)],
     accuracy=100,
-    description="The user hurls an electric orb at the target. The faster the user is than the target, the greater the damage."
+    description="The user hurls an electric orb at the target."
 }
 voltTackle = Move {
-    moveName="volt Tackle",
+    moveName="Volt Tackle",
     moveEffect=[(DealDamage 40 0.5)],
     accuracy=70,
-    description="The user throws an electrified tackle. It hurts the user a little."
+    description="The user throws an electrified tackle. It will hurts the user."
 }
 thunderWave = Move {
     moveName="Thuner Wave",
-    moveEffect=[(AttachStatus Paralyzed (1,3)) Opponent],
-    accuracy=100,
+    moveEffect=[(AttachStatus Paralyzed (1,1)) Opponent],
+    accuracy=75,
     description="A weak electric shock that is sure to cause paralysis if it hits."
 }
 -- pikachu--

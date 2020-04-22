@@ -73,7 +73,9 @@ actionByMoveEffect bs (ChangeStats mod t target) = attackerChangeStats bs mod ta
 actionByMoveEffect bs@(BattleState atker dfder g) (AttachStatus st rate target) = do
     let (trigger, newGen) = randomTrigger g rate
     if trigger then attackerSetStatus bs st target
-    else return (BattleState atker dfder newGen)
+    else do
+        tell [(StatusLog st ("Failed to attach "++(show st)) target)]
+        return (BattleState atker dfder newGen)
         
 
 attackerAttack :: BattleState -> Int -> MoveTarget -> Writer [MoveLogs] BattleState
@@ -108,7 +110,8 @@ attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target = 
             in (BattleState (atker, newAtkerSt) (dfder, dfderSt) g, isSet, name atker)
         Opponent -> let (newDfderSt, isSet) = setStatus dfderSt st
             in (BattleState (atker, atkerSt) (dfder, newDfderSt) g, isSet, name dfder)
-    when (isSet') (tell [StatusLog st (pkName++(statusAttachedDescription st)) target])
+    if (isSet') then tell [StatusLog st (pkName++(statusAttachedDescription st)) target]
+    else tell [StatusLog st (pkName++" is already "++(show st)) target]
     return newBs
 
 
@@ -126,7 +129,7 @@ checkBeforeAttack bs@(BattleState atker dfder g) move = do
             return (BattleState atker dfder newGen, Nothing)
         else return (bs, Just move)
     else if Flying `elem` (snd atker) then do
-        let flyAttackMove = Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky"
+        let flyAttackMove = (Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky")
             filterOutFlyStatus = filter (\s -> s /= Flying) (snd atker)
         tell [NormalLog $ (name $ fst atker)++" is hovering above the sky"]
         return ((BattleState (fst atker, filterOutFlyStatus) dfder g), Just flyAttackMove)
