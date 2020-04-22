@@ -1,6 +1,7 @@
 module Pokemon.PokemonInstance (
     charizard,
-    blastoise
+    blastoise,
+    pikachu
 ) where
 
 import Pokemon.PokemonInfo (PokemonInfo (..))
@@ -62,4 +63,35 @@ aquaTailMove = Move {
     description="The user attacks by swinging its tail as if it were a vicious wave in a raging storm"
 }
 -- blastoise --
+
+-- pikachu--
+pikachu = PokemonInfo {
+    name="Pikachu",
+    stats=(PokemonStats 56 56 14 10 16),
+    pokemonType=Electric,
+    moves=[electroBall, voltTackle, thunderWave]
+}
+electroBall = Move {
+    moveName="Electro Ball",
+    moveEffect=[(DealDamage 30 0.0)],
+    accuracy=100,
+    description="The user hurls an electric orb at the target. The faster the user is than the target, the greater the damage."
+}
+voltTackle = Move {
+    moveName="volt Tackle",
+    moveEffect=[(DealDamage 40 0.5)],
+    accuracy=70,
+    description="The user throws an electrified tackle. It hurts the user a little."
+}
+thunderWave = Move {
+    moveName="Thuner Wave",
+    moveEffect=[(AttachStatus Paralyzed (1,3)) Opponent],
+    accuracy=100,
+    description="A weak electric shock that is sure to cause paralysis if it hits."
+}
+-- pikachu--
+
+
+
+
 

@@ -25,17 +25,12 @@ playerWin (GamePlayState p e g) =
     if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
     else Just (isDead $ fst e)
 
-gamePlayState = GamePlayState {
-    playerState = (charizard, []),
-    enemyState = (blastoise, []),
-    gamePlayGen = mkStdGen 10
-}
 
 mainGamePlay :: IO ()
 mainGamePlay = do
     stdGen <- getStdGen
     let gamePlayState = GamePlayState {
-        playerState = (charizard, []),
+        playerState = (pikachu, []),
         enemyState = (blastoise, []),
         gamePlayGen = stdGen
     }
