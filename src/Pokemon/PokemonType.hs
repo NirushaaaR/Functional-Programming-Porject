@@ -1,7 +1,7 @@
 module Pokemon.PokemonType where
 
 
-data Type = Fire | Water | Grass | Electric | Fairy | Dark deriving (Eq, Show, Read)
+data Type = Normal | Fire | Water | Grass | Electric | Fairy | Dark deriving (Eq, Show, Read)
 
 -- weakness :: Type -> [Type]
 -- weakness Fire = [Water]

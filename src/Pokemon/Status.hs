@@ -2,7 +2,7 @@ module Pokemon.Status where
 
 import System.Console.ANSI (Color(..))
 
-data Status = Flying | Poison | Paralyzed | Burn  deriving (Eq, Show, Read)
+data Status = Flying | Poison | Paralyzed | Burn | Confuse  deriving (Eq, Show, Read)
 
 setStatus :: [Status] -> Status -> ([Status], Bool)
 setStatus currentSt newSt = 

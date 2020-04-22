@@ -92,9 +92,59 @@ thunderWave = Move {
 }
 -- pikachu--
 
+-- venusaur --
+venusaur = PokemonInfo {
+    name="Venusaur",
+    stats=(PokemonStats 78 78 11 14 10),
+    pokemonType=Grass,
+    moves=[poisonPowder, doubleEdge, razorLeaf]
+}
+poisonPowder = Move {
+    moveName="Poison Powder",
+    moveEffect=[(AttachStatus Poison (1,1)) Opponent],
+    accuracy=100,
+    description="The user scatters a cloud of poisonous dust that poisons the target."
+}
+doubleEdge = Move {
+    moveName="Double-Edge",
+    moveEffect=[(DealDamage 40 0.25)],
+    accuracy=90,
+    description="A reckless, life-risking tackle. This also damages the user quite a lot."
+}
+razorLeaf = Move {
+    moveName="Razor Leaf",
+    moveEffect=[(DealDamage 32 0.0)],
+    accuracy=95,
+    description="A sharp-edged leaf is launched to slash at the foe. It has a high critical-hit ratio."
+}
+-- venusaur --
 
-
-
+-- gengar --
+gengar = PokemonInfo {
+    name="Gengar",
+    stats=(PokemonStats 56 56 17 8 13),
+    pokemonType=Grass,
+    moves=[confuseRay, shadowBall, lick]
+}
+confuseRay = Move {
+    moveName="Confuse Ray",
+    moveEffect=[(AttachStatus Confuse (1,2)) Opponent],
+    accuracy=80,
+    description="The target is exposed to a sinister ray that triggers confusion."
+}
+shadowBall = Move {
+    moveName="Shadow Ball",
+    moveEffect=[(DealDamage 40 0.0)],
+    accuracy=60,
+    description="A reckless, life-risking tackle. This also damages the user quite a lot."
+}
+lick = Move {
+    moveName="Lick",
+    moveEffect=[(DealDamage 15 0.0)],
+    accuracy=10,
+    description="The foe is licked with a long tongue, causing damage. It may also paralyze the target."
+}
+-- gengar --
 
 ------ sprite --------
 getSprite :: String -> [String]
