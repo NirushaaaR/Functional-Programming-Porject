@@ -3,10 +3,10 @@ module Pokemon.PokemonType where
 
 data Type = Fire | Water | Grass | Electric | Fairy | Dark deriving (Eq, Show, Read)
 
--- weakness :: Type -> [Type]
--- weakness Fire = [Water]
--- weakness Water = [Grass]
--- weakness Grass = [Fire]
+weakness :: Type -> [Type]
+weakness Fire = [Water]
+weakness Water = [Grass]
+weakness Grass = [Fire]
 
 
 -- weakAgainst :: Type -> Type -> Bool

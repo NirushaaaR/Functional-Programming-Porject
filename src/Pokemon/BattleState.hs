@@ -1,7 +1,6 @@
 module Pokemon.BattleState where
 
 import System.Random
-import Control.Monad (foldM)
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), takeDamage, changeStat, calculateMoveDamage)
@@ -56,9 +55,7 @@ actionByMoveEffect bs (DealDamage p drawback) = do
     else do
             let damage = calculateMoveDamage p (fst $ attacker bs) (fst $ defender bs)
             bs2 <- attackerAttack bs damage Opponent
-            if drawback /= 0.0 then do
-                let drawbackDamage = mulceling damage drawback
-                attackerAttack bs2 drawbackDamage Self
+            if drawback /= 0.0 then attackerAttack bs2 (mulceling damage drawback) Self
             else return bs2
             where
                 attackerAttack :: BattleState -> Int -> MoveTarget -> Writer [Log] BattleState

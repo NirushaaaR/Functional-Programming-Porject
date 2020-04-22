@@ -26,7 +26,7 @@ data Log =
     DamageLog { damageTaken::Int, targetLog::MoveTarget }
     | StatsLog { change::String, targetLog::MoveTarget }
     | StatusLog { statusAffect::Status, desc::String, targetLog::MoveTarget }
-    | NormalLog { log::String }
+    | NormalLog String
     deriving (Show)
 
 

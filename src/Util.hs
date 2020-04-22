@@ -1,9 +1,7 @@
 module Util where
 
 import System.Random
--- import Control.Monad
 import Control.Monad.Writer
-
 
 data AttackTurn = Player | Enemy deriving (Eq, Show, Read)
 

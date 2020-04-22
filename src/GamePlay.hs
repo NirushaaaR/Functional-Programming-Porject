@@ -1,7 +1,10 @@
 module GamePlay where
 
 import System.Random
-import Text.Read
+import System.IO
+import System.IO.Error (catchIOError)
+import Text.Read (readMaybe)
+import Data.Char (toLower)
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
@@ -43,7 +46,11 @@ mainGamePlay = do
     return ()
 
 continueGamePlay :: GamePlayState -> IO Bool
-continueGamePlay (GamePlayState player enemy g) = do
+continueGamePlay gs = do
+    -- savegame or loadgame
+    gs' <- saveOrLoad gs
+    let (GamePlayState player enemy g) = gs'
+
     -- Choose Move for player and Enemy
     (chosenMove, g') <- chooseMove player enemy g
 
@@ -93,6 +100,27 @@ endTurnAction (Left (GamePlayState (player, playerSt) (enemy,enemySt) g)) = do
     return $ playerWinOrGameNotEnd newGs
 
 
+saveOrLoad :: GamePlayState -> IO GamePlayState
+saveOrLoad gs = do
+    putStrLn "type (save) or type (load) game here, otherwise continue:"
+    command <- fmap (map toLower) getLine
+    if command == "save" then do
+        save "save.dat" gs >>= putStrLn
+        saveOrLoad gs
+    else if command == "load" then do
+        result <- load "save.dat"
+        case result of 
+            Right loaded -> do
+                putStrLn "load file successfully"
+                newGen <- newStdGen
+                let gs' = (GamePlayState (playerState loaded) (enemyState loaded) newGen)
+                saveOrLoad gs'
+            Left err -> do
+                putStrLn err
+                saveOrLoad gs
+    else return gs
+
+
 chooseMove :: PokemonState -> PokemonState -> StdGen -> IO (PlayerMoveAndEnemyMove, StdGen)
 chooseMove playerPk enemyPk stdGen = do
     -- Choose Move for player
@@ -114,8 +142,8 @@ showPokemonMove moveList = do
 
 choosePlayerMove :: (Int,Int) -> IO Int
 choosePlayerMove (minRange, maxRange) = do
-    line <- getLine
-    case readMaybe line :: Maybe Int of
+    command <- fmap (map toLower) getLine
+    case readMaybe command :: Maybe Int of
         Nothing -> choosePlayerMove (minRange, maxRange)
         Just n -> if n < minRange || n > maxRange then choosePlayerMove (minRange, maxRange) else return n
 
@@ -133,3 +161,25 @@ checkAttackFirst p1@(pk1, _) p2@(pk2, _) g =
     if (speed $ stats pk1) == (speed $ stats pk2) then
         let (trigger, newGen) = randomTrigger g (50,100) in (trigger, newGen)
     else ((speed $ stats pk1) > (speed $ stats pk2), g)
+
+
+----------- Save & Load -------------------
+save :: String -> GamePlayState -> IO String
+save filePath gs = do
+    catchIOError (
+        do
+            writeFile filePath (show gs)
+            return $ "Save file successfully to "++(filePath)
+        ) 
+        (\e -> return $ "Couldn't save file "++(show e) )
+
+load :: String -> IO (Either String GamePlayState)
+load filePath = do
+    catchIOError (
+        do
+            readData <- readFile filePath
+            return $ case readMaybe readData :: Maybe GamePlayState of
+                Nothing -> Left "Save file corrupted"
+                Just gs -> Right gs
+        )
+        (\e -> return $ Left $ "Couldn't load file "++(show e)) 
