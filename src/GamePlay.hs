@@ -12,7 +12,7 @@ import Pokemon.PokemonMove (Move (..), Log (..), MoveTarget (..))
 import Pokemon.PokemonStat (speed)
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
-import Util (AttackTurn (..), randomTrigger)
+import Util (AttackTurn (..), randomTrigger, fromUnicode, toUnicode)
 import DrawScreen (drawGameState)
 
 
@@ -50,6 +50,8 @@ continueGamePlay gs = do
     -- savegame or loadgame
     gs' <- saveOrLoad gs
     let (GamePlayState player enemy g) = gs'
+
+    drawGameState player enemy [] Player
 
     -- Choose Move for player and Enemy
     (chosenMove, g') <- chooseMove player enemy g
@@ -168,7 +170,8 @@ save :: String -> GamePlayState -> IO String
 save filePath gs = do
     catchIOError (
         do
-            writeFile filePath (show gs)
+            let unicode = toUnicode (show gs)
+            writeFile filePath (show unicode)
             return $ "Save file successfully to "++(filePath)
         ) 
         (\e -> return $ "Couldn't save file "++(show e) )
@@ -178,8 +181,10 @@ load filePath = do
     catchIOError (
         do
             readData <- readFile filePath
-            return $ case readMaybe readData :: Maybe GamePlayState of
-                Nothing -> Left "Save file corrupted"
-                Just gs -> Right gs
+            return $ case readMaybe readData :: Maybe [Int] of
+                Nothing -> Left "Save file corrupted from unicode"
+                Just unicode -> case readMaybe (fromUnicode unicode) :: Maybe GamePlayState of
+                        Nothing -> Left "Save file corrupted"
+                        Just gs -> Right gs
         )
         (\e -> return $ Left $ "Couldn't load file "++(show e)) 

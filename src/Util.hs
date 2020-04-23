@@ -3,6 +3,9 @@ module Util where
 import System.Random
 import Control.Monad.Writer
 
+import Data.Char (ord, chr)
+
+
 data AttackTurn = Player | Enemy deriving (Eq, Show, Read)
 
 multiplyIntFloat :: Int -> Float -> Float
@@ -21,5 +24,9 @@ randomTrigger stdGen (chance, inChance) =
     in  if chance > inChance then error "InChance Need to be bigger than chance"
         else ((randNum `mod` (inChance+1)) <= chance, newGen)
 
-    
-    
+
+toUnicode :: String -> [Int]
+toUnicode = map ord
+
+fromUnicode :: [Int] -> String
+fromUnicode = map chr
