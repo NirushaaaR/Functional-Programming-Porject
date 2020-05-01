@@ -71,17 +71,21 @@ continueGamePlay gs = do
 playBattle :: GamePlayState -> PlayerMoveAndEnemyMove -> AttackTurn -> IO (Either GamePlayState Bool)
 playBattle gs (playerMv, enemyMv) firstTurn = 
     -- play first turn
-    if firstTurn == Player then foldM (\currentGs f-> f currentGs) (Left gs) [(playerAction playerMv), (enemyAction enemyMv), endTurnAction]
-    else foldM (\currentGs f -> f currentGs) (Left gs) [(enemyAction enemyMv), (playerAction playerMv), endTurnAction]
+    if firstTurn == Player 
+        then foldM (\currentGs f-> f currentGs) (Left gs) [(playerAction playerMv), (enemyAction enemyMv), endTurnAction]
+    else 
+        foldM (\currentGs f -> f currentGs) (Left gs) [(enemyAction enemyMv), (playerAction playerMv), endTurnAction]
 
 
 playerAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
 playerAction _ (Right w) = return $ Right w 
-playerAction moveIndex (Left gs) = turnAction Player moveIndex (BattleState (playerState gs) (enemyState gs) (gamePlayGen gs))
+playerAction moveIndex (Left gs) = 
+    turnAction Player moveIndex (BattleState (playerState gs) (enemyState gs) (gamePlayGen gs))
 
 enemyAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
 enemyAction _ (Right w) = return $ Right w      
-enemyAction moveIndex (Left gs) = turnAction Enemy moveIndex (BattleState (enemyState gs) (playerState gs) (gamePlayGen gs))
+enemyAction moveIndex (Left gs) = 
+    turnAction Enemy moveIndex (BattleState (enemyState gs) (playerState gs) (gamePlayGen gs))
 
 turnAction :: AttackTurn -> Int -> BattleState -> IO (Either GamePlayState Bool)
 turnAction turn moveIndex bs = do
