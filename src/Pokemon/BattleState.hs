@@ -29,26 +29,16 @@ attackerUseMove bs@(BattleState at _ _) moveIndex = do
                 (BattleState at' df' g') = bs'
             tell [NormalLog $ (name $ fst at') ++ " use "++ mn]
             let (trigger, newGen) = randomTrigger g' (macc, 100)
-                newBs = (BattleState at' df' newGen)
-            if trigger then foldM (\bstate f -> f bstate) newBs (map (flip actionByMoveEffect) effects)
+                bs'' = (BattleState at' df' newGen)
+            if trigger then foldM (\bstate f -> f bstate) bs'' (map actionByMoveEffect effects)
             else do
                 tell [NormalLog $ "But it missed..."]
-                return newBs
-
-
-takeStatusEffect :: Status -> PokemonInfo -> Writer [Log] PokemonInfo
-takeStatusEffect st pkInfo = 
-    if st == Poison || st == Burn then do
-        let damage = mulceling (maxHp $ stats pkInfo) (1/8)
-        tell [StatusLog st ((name pkInfo)++" is hurt by "++(show st)) Self]
-        tell [DamageLog damage Self]
-        return $ (takeDamage pkInfo damage)
-    else return (pkInfo)
+                return bs''
 
 
 -- Attacker use move that Dealdamage
-actionByMoveEffect :: BattleState -> MoveEffect ->  Writer [Log] BattleState
-actionByMoveEffect bs (DealDamage p drawback) = do
+actionByMoveEffect :: MoveEffect -> BattleState ->  Writer [Log] BattleState
+actionByMoveEffect (DealDamage p drawback) bs = do
     if Flying `elem` (snd $ defender bs) then do
         tell [NormalLog $ "Can't Deal Damage, "++(show $ name $ fst $ defender bs)++" is Flying"]
         return bs
@@ -68,7 +58,7 @@ actionByMoveEffect bs (DealDamage p drawback) = do
                             in return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
 
 -- Attacker use move that ChangeStats
-actionByMoveEffect bs (ChangeStats mod target) = attackerChangeStats bs mod target
+actionByMoveEffect (ChangeStats mod target) bs = attackerChangeStats bs mod target
     where
         attackerChangeStats :: BattleState -> StatsModifer -> MoveTarget -> Writer [Log] BattleState
         attackerChangeStats (BattleState (atker, atkerSt) (dfder, dfderSt) g) modifier target = do
@@ -80,7 +70,7 @@ actionByMoveEffect bs (ChangeStats mod target) = attackerChangeStats bs mod targ
                     in return (BattleState (atker, atkerSt) (newDfder, dfderSt) g)
 
 -- Attacker use move that AttachStatus
-actionByMoveEffect bs@(BattleState atker dfder g) (AttachStatus st rate target) = do
+actionByMoveEffect (AttachStatus st rate target) bs@(BattleState atker dfder g) = do
     let (trigger, newGen) = randomTrigger g rate
     if trigger then attackerSetStatus bs st target
     else do
@@ -121,3 +111,13 @@ checkBeforeUseMove bs@(BattleState atker dfder g) move = do
         tell [NormalLog $ (name $ fst atker)++" is hovering above the sky"]
         return ((BattleState (fst atker, filterOutFlyStatus) dfder g), Just flyAttackMove)
     else return (bs, Just move)
+
+
+takeStatusEffect :: Status -> PokemonInfo -> Writer [Log] PokemonInfo
+takeStatusEffect st pkInfo = 
+    if st == Poison || st == Burn then do
+        let damage = mulceling (maxHp $ stats pkInfo) (1/8)
+        tell [StatusLog st ((name pkInfo)++" is hurt by "++(show st)) Self]
+        tell [DamageLog damage Self]
+        return $ (takeDamage pkInfo damage)
+    else return (pkInfo)
