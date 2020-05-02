@@ -1,7 +1,10 @@
 module GamePlay where
 
 import System.Random
-import Text.Read
+import System.IO
+import System.IO.Error (catchIOError)
+import Text.Read (readMaybe)
+import Data.Char (toLower)
 import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
@@ -9,7 +12,7 @@ import Pokemon.PokemonMove (Move (..), Log (..), MoveTarget (..))
 import Pokemon.PokemonStat (speed)
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
-import Util (AttackTurn (..), randomTrigger)
+import Util (AttackTurn (..), randomTrigger, fromUnicode, toUnicode)
 import DrawScreen (drawGameState)
 
 
@@ -21,16 +24,10 @@ data GamePlayState = GamePlayState {
     gamePlayGen :: StdGen
 } deriving (Show, Read)
 
-isPlayerWin :: GamePlayState -> Maybe Bool
-isPlayerWin (GamePlayState p e g) =
-    if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
-    else Just (isDead $ fst e)
-
-
--- playerWinOrGameNotEnd :: GamePlayState -> Either GamePlayState Bool
--- isPlayerWin (GamePlayState p e g) =
---     if not ((isDead $ fst p ) || (isDead $ fst e)) then Nothing
---     else Just (isDead $ fst e)
+playerWinOrGameNotEnd :: GamePlayState -> Either GamePlayState Bool
+playerWinOrGameNotEnd gs@(GamePlayState p e g) =
+    if not ((isDead $ fst p ) || (isDead $ fst e)) then Left gs
+    else Right (isDead $ fst e)
 
 
 mainGamePlay :: IO ()
@@ -38,7 +35,7 @@ mainGamePlay = do
     stdGen <- getStdGen
     let gamePlayState = GamePlayState {
         playerState = (pikachu, []),
-        enemyState = (blastoise, []),
+        enemyState = (gengar, []),
         gamePlayGen = stdGen
     }
     putStrLn $ "Battle Between" ++ (name $ fst $ playerState gamePlayState) ++ " and " ++ (name $ fst $ enemyState gamePlayState)
@@ -49,7 +46,13 @@ mainGamePlay = do
     return ()
 
 continueGamePlay :: GamePlayState -> IO Bool
-continueGamePlay (GamePlayState player enemy g) = do
+continueGamePlay gs = do
+    -- savegame or loadgame
+    gs' <- saveOrLoad gs
+    let (GamePlayState player enemy g) = gs'
+
+    drawGameState player enemy [] Player
+
     -- Choose Move for player and Enemy
     (chosenMove, g') <- chooseMove player enemy g
 
@@ -66,50 +69,62 @@ continueGamePlay (GamePlayState player enemy g) = do
 
 
 playBattle :: GamePlayState -> PlayerMoveAndEnemyMove -> AttackTurn -> IO (Either GamePlayState Bool)
-playBattle (GamePlayState player enemy g) (playerMv, enemyMv) firstTurn = do
+playBattle gs (playerMv, enemyMv) firstTurn = 
     -- play first turn
-    gs@(GamePlayState player' enemy' g') <- if firstTurn == Player then playerAction (BattleState player enemy g, playerMv)
-                                            else enemyAction (BattleState enemy player g, enemyMv)
-    case isPlayerWin gs of 
-        Just m -> return $ Right m
-        -- if not end yet play seccond turn
-        Nothing -> do
-            gs' <-  if firstTurn == Player then enemyAction (BattleState enemy' player' g', enemyMv)
-                    else playerAction (BattleState player' enemy' g', playerMv)
-            -- when everyone already end turn
-            case isPlayerWin gs' of 
-                Just m -> return $ Right m
-                Nothing -> do
-                    gs'' <- endTurnAction gs'
-                    case isPlayerWin gs'' of
-                        Just m -> return $ Right m
-                        Nothing -> return $ Left gs''
+    if firstTurn == Player 
+        then foldM (\currentGs f-> f currentGs) (Left gs) [(playerAction playerMv), (enemyAction enemyMv), endTurnAction]
+    else 
+        foldM (\currentGs f -> f currentGs) (Left gs) [(enemyAction enemyMv), (playerAction playerMv), endTurnAction]
 
 
-playerAction :: (BattleState, Int) -> IO GamePlayState
-playerAction = turnAction Player 
+playerAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+playerAction _ (Right w) = return $ Right w 
+playerAction moveIndex (Left gs) = 
+    turnAction Player moveIndex (BattleState (playerState gs) (enemyState gs) (gamePlayGen gs))
 
-enemyAction :: (BattleState, Int) -> IO GamePlayState
-enemyAction = turnAction Enemy      
+enemyAction :: Int -> Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+enemyAction _ (Right w) = return $ Right w      
+enemyAction moveIndex (Left gs) = 
+    turnAction Enemy moveIndex (BattleState (enemyState gs) (playerState gs) (gamePlayGen gs))
 
-turnAction :: AttackTurn -> (BattleState, Int) -> IO GamePlayState
-turnAction turn (bs, mIdx) = do
-    (bs', logs) <- return $ runWriter $ attackerUseMove bs mIdx
+turnAction :: AttackTurn -> Int -> BattleState -> IO (Either GamePlayState Bool)
+turnAction turn moveIndex bs = do
+    (bs', logs) <- return $ runWriter $ attackerUseMove bs moveIndex
     let newGs = GamePlayState player enemy (gen bs')
         (player, enemy) = if turn == Player then (attacker bs', defender bs') else (defender bs', attacker bs')
     drawGameState' newGs logs turn
-    return newGs
+    return $ playerWinOrGameNotEnd newGs
 
-
-endTurnAction :: GamePlayState -> IO GamePlayState
-endTurnAction (GamePlayState (player, playerSt) (enemy,enemySt) g) = do
+endTurnAction :: Either GamePlayState Bool -> IO (Either GamePlayState Bool)
+endTurnAction (Right w) = return $ Right w
+endTurnAction (Left (GamePlayState (player, playerSt) (enemy,enemySt) g)) = do
     (player', logs1) <- return $ runWriter $ foldM (\at f -> f at) (player) (map takeStatusEffect playerSt)
     when (not $ null logs1) $ drawGameState' (GamePlayState (player', playerSt) (enemy,enemySt) g) logs1 Player
     (enemy', logs2) <- return $ runWriter $ foldM (\at f -> f at) (enemy) (map takeStatusEffect enemySt)
     let newGs = (GamePlayState (player', playerSt) (enemy', enemySt) g)
     when (not $ null logs2) $ drawGameState' newGs logs2 Enemy
-    return newGs
+    return $ playerWinOrGameNotEnd newGs
 
+
+saveOrLoad :: GamePlayState -> IO GamePlayState
+saveOrLoad gs = do
+    putStrLn "type (save) or type (load) game here, otherwise continue:"
+    command <- fmap (map toLower) getLine
+    if command == "save" then do
+        save "save.dat" gs >>= putStrLn
+        saveOrLoad gs
+    else if command == "load" then do
+        result <- load "save.dat"
+        case result of 
+            Right loaded -> do
+                putStrLn "load file successfully"
+                newGen <- newStdGen
+                let gs' = (GamePlayState (playerState loaded) (enemyState loaded) newGen)
+                saveOrLoad gs'
+            Left err -> do
+                putStrLn err
+                saveOrLoad gs
+    else return gs
 
 
 chooseMove :: PokemonState -> PokemonState -> StdGen -> IO (PlayerMoveAndEnemyMove, StdGen)
@@ -133,8 +148,8 @@ showPokemonMove moveList = do
 
 choosePlayerMove :: (Int,Int) -> IO Int
 choosePlayerMove (minRange, maxRange) = do
-    line <- getLine
-    case readMaybe line :: Maybe Int of
+    command <- fmap (map toLower) getLine
+    case readMaybe command :: Maybe Int of
         Nothing -> choosePlayerMove (minRange, maxRange)
         Just n -> if n < minRange || n > maxRange then choosePlayerMove (minRange, maxRange) else return n
 
@@ -152,3 +167,28 @@ checkAttackFirst p1@(pk1, _) p2@(pk2, _) g =
     if (speed $ stats pk1) == (speed $ stats pk2) then
         let (trigger, newGen) = randomTrigger g (50,100) in (trigger, newGen)
     else ((speed $ stats pk1) > (speed $ stats pk2), g)
+
+
+----------- Save & Load -------------------
+save :: String -> GamePlayState -> IO String
+save filePath gs = do
+    catchIOError (
+        do
+            let unicode = toUnicode (show gs)
+            writeFile filePath (show unicode)
+            return $ "Save file successfully to "++(filePath)
+        ) 
+        (\e -> return $ "Couldn't save file "++(show e) )
+
+load :: String -> IO (Either String GamePlayState)
+load filePath = do
+    catchIOError (
+        do
+            readData <- readFile filePath
+            return $ case readMaybe readData :: Maybe [Int] of
+                Nothing -> Left "Save file corrupted from unicode"
+                Just unicode -> case readMaybe (fromUnicode unicode) :: Maybe GamePlayState of
+                        Nothing -> Left "Save file corrupted"
+                        Just gs -> Right gs
+        )
+        (\e -> return $ Left $ "Couldn't load file "++(show e)) 

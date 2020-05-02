@@ -2,7 +2,8 @@ module Pokemon.PokemonInstance (
     charizard,
     blastoise,
     pikachu,
-    getSprite
+    getSprite,
+    gengar
 ) where
 
 import Pokemon.PokemonInfo (PokemonInfo (..))
@@ -80,14 +81,14 @@ electroBall = Move {
 }
 voltTackle = Move {
     moveName="Volt Tackle",
-    moveEffect=[(DealDamage 40 0.5)],
+    moveEffect=[(DealDamage 45 0.5)],
     accuracy=70,
     description="The user throws an electrified tackle. It will hurts the user."
 }
 thunderWave = Move {
     moveName="Thuner Wave",
     moveEffect=[(AttachStatus Paralyzed (1,1)) Opponent],
-    accuracy=75,
+    accuracy=70,
     description="A weak electric shock that is sure to cause paralysis if it hits."
 }
 -- pikachu--
@@ -122,7 +123,7 @@ razorLeaf = Move {
 -- gengar --
 gengar = PokemonInfo {
     name="Gengar",
-    stats=(PokemonStats 56 56 17 8 13),
+    stats=(PokemonStats 1 1 17 8 13),
     pokemonType=Grass,
     moves=[confuseRay, shadowBall, lick]
 }
@@ -188,7 +189,7 @@ getSprite name =
         "           `-.__ `,  `'   .  _.>----''.  _  __  /",
         "                .'        /\"'          |  \"'   '_",
         "               /_|.-'\\ ,\".             '.'`__'-( \\",
-        "                 / ,\"'\"\\,'               `/  `-.|\" mh"]
+        "                 / ,\"'\"\\,'               `/  `-.|\""]
     else if name == "Blastoise" then
         ["",
         "",
@@ -227,7 +228,7 @@ getSprite name =
         "             _,`._       `.   _,-'        ,',^.-            `.",
         "          ,-'     v....  _.`\"',          _:'--....._______,.-'",
         "        ._______./     /',,-'\"'`'--.  ,-'  `.",
-        "                 \"\"\"\"\"`.,'         _\\`----...' mh",
+        "                 \"\"\"\"\"`.,'         _\\`----...'",
         "                        --------\"\"'"]
     else if name == "Pikachu" then
         [
@@ -273,7 +274,7 @@ getSprite name =
     "                   .'         /",
     "                 .'          /",
     "               ,'           /",
-    "             _'....----\"\"\"\"\"mh"
+    "             _'....----\"\"\"\"\""
         ]
 
     else if name == "Venusaur" then 
@@ -308,7 +309,7 @@ getSprite name =
     "         )        `-._ '-.        `--\"      _.-'.-\"\"        `.",
     "        ./            `,. `\".._________...\"\"_.-\"`.          _j",
     "       /_\\.__,\"\".   ,.'  \"`-...________.---\"     .\".   ,.  / \\",
-    "              \\_/\"\"\"-'                           `-'--(_,`\"`-` mh"
+    "              \\_/\"\"\"-'                           `-'--(_,`\"`-` "
 
         ]
     else if name == "Gengar" then
@@ -337,7 +338,7 @@ getSprite name =
     "        |             ,^._            _.-\"          '",
     "        |          _.'    `'\"\"`----`\"'   `._       '",
     "        j__     _,'                         `-.'-.\"`",
-    "          ',-.,' mh"
+    "          ',-.,' "
         ]
     else []
 

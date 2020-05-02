@@ -63,5 +63,3 @@ resetScreen = do
     clearFromCursorToScreenBeginning
     setCursorPosition 0 0
     setSGR [Reset]
-
-
