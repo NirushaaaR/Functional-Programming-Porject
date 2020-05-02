@@ -95,7 +95,7 @@ choosePokemonDisplay = do
     putStrLn "                                      |          |           |                    |           |                  |           |              |"
     putStrLn "                                      |            |_______|                        |_______|                      |_______|                |"
     putStrLn "                                      |                                                                                                     |"
-    putStrLn "                                      |           Pikachu [1]                      Blastoise[2]                   Charizard[3]              |"
+    putStrLn "                                      |           Venusaur [1]                      Blastoise[2]                   Charizard[3]              |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"

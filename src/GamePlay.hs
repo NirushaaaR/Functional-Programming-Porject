@@ -191,16 +191,17 @@ load filePath = do
 ---------------------choose your pokemon--------------
 choose :: IO()
 choose = do
-    let pokemonName =  [pikachu, blastoise, charizard]
+    stdGen <- getStdGen
+    let pokemonName =  [venusaur, blastoise, charizard,pikachu,gengar,golduck]
     choosePokemonDisplay
     keyInput <- getLine
     let checkKey = read keyInput :: Int
+    let (enemyRan,stdGen') = randomR (3,5) stdGen
     if checkKey <= 3 && checkKey >0 then do
-        stdGen <- getStdGen
         let gamePlayState = GamePlayState {
             playerState = (pokemonName!!(checkKey-1),[]),
-            enemyState =  (blastoise,[]),
-            gamePlayGen = stdGen
+            enemyState =  (pokemonName!!(enemyRan),[]),
+            gamePlayGen = stdGen'
         }
         mainGamePlay gamePlayState
     else choose
