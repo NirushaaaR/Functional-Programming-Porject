@@ -13,7 +13,7 @@ import Pokemon.PokemonStat (speed)
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
 import Util (AttackTurn (..), randomTrigger, fromUnicode, toUnicode)
-import DrawScreen (drawGameState)
+import DrawScreen (drawGameState,startDisplay,choosePokemonDisplay)
 
 
 type PlayerMoveAndEnemyMove = (Int, Int)
@@ -30,17 +30,12 @@ playerWinOrGameNotEnd gs@(GamePlayState p e g) =
     else Right (isDead $ fst e)
 
 
-mainGamePlay :: IO ()
-mainGamePlay = do
+mainGamePlay :: GamePlayState -> IO ()
+mainGamePlay gs@(GamePlayState p e g) = do
     stdGen <- getStdGen
-    let gamePlayState = GamePlayState {
-        playerState = (pikachu, []),
-        enemyState = (blastoise, []),
-        gamePlayGen = stdGen
-    }
-    putStrLn $ "Battle Between" ++ (name $ fst $ playerState gamePlayState) ++ " and " ++ (name $ fst $ enemyState gamePlayState)
-    drawGameState (playerState gamePlayState) (enemyState gamePlayState) [] Player
-    win <- continueGamePlay gamePlayState
+    putStrLn $ "Battle Between" ++ (name $ fst $ p) ++ " and " ++ (name $ fst $ e)
+    drawGameState (p) (e) [] Player
+    win <- continueGamePlay gs
     if win then putStrLn "Player Win!!"
     else putStrLn "Player Lose!!"
     return ()
@@ -192,3 +187,41 @@ load filePath = do
                         Just gs -> Right gs
         )
         (\e -> return $ Left $ "Couldn't load file "++(show e)) 
+
+---------------------choose your pokemon--------------
+choose :: IO()
+choose = do
+    let pokemonName =  [pikachu, blastoise, charizard]
+    choosePokemonDisplay
+    keyInput <- getLine
+    let checkKey = read keyInput :: Int
+    if checkKey <= 3 && checkKey >0 then do
+        stdGen <- getStdGen
+        let gamePlayState = GamePlayState {
+            playerState = (pokemonName!!(checkKey-1),[]),
+            enemyState =  (blastoise,[]),
+            gamePlayGen = stdGen
+        }
+        mainGamePlay gamePlayState
+    else choose
+
+----------------------Menu----------------------------
+menu :: IO ()
+menu = do  
+    startDisplay
+    putStrLn "Please select"
+    keyInput <- getLine
+    if keyInput == "s"|| keyInput == "S" then do
+        choose
+    else if keyInput == "l" || keyInput == "L" then do
+        result <- load "save.dat"
+        case result of 
+            Right loaded -> do
+                putStrLn "load file successfully"
+                mainGamePlay loaded
+            Left err -> do
+                putStrLn err
+    else do
+        menu
+
+

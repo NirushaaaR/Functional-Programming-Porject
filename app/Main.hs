@@ -5,7 +5,7 @@ import GamePlay
 
 
 main :: IO ()
-main = mainGamePlay
+main = menu
     -- resetScreen
     -- drawLargeSprite (0, 0) (getSprite "Charizard")
     -- drawLargeSprite (0,90) (getSprite "Blastoise")
@@ -14,3 +14,4 @@ main = mainGamePlay
 
 
      
+        
