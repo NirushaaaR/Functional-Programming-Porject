@@ -107,9 +107,17 @@ checkBeforeUseMove bs@(BattleState atker dfder g) move = do
     -- when flying this turn will use fly attack move instead and remove Flying status
     else if Flying `elem` (snd atker) then do
         let flyAttackMove = (Move "Fly Attack" [DealDamage 20 0.0] 100 "Attack From the Sky")
-            filterOutFlyStatus = filter (\s -> s /= Flying) (snd atker)
         tell [NormalLog $ (name $ fst atker)++" is hovering above the sky"]
-        return ((BattleState (fst atker, filterOutFlyStatus) dfder g), Just flyAttackMove)
+        return ((BattleState (fst atker, filterOutStatus Flying (snd atker)) dfder g), Just flyAttackMove)
+    else if Confuse `elem` (snd atker) then do
+        let (trigger, newGen) = randomTrigger g (450, 1000)
+            confusedMove = (Move "Confused" [ChangeStats (StatsModifer (-0.1) 0 0 0) Self] 100 "confusion")
+        if trigger then do
+            tell [NormalLog $ (name $ fst atker)++" hurt itself in its confusion"]
+            return (BattleState atker dfder newGen, (Just confusedMove))
+        else do
+            tell [NormalLog $ (name $ fst atker)++" is not confused anymore"]
+            return ((BattleState (fst atker, filterOutStatus Confuse (snd atker)) dfder g), Just move)
     else return (bs, Just move)
 
 

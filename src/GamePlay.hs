@@ -33,20 +33,9 @@ playerWinOrGameNotEnd gs@(GamePlayState p e g) =
 mainGamePlay :: GamePlayState -> IO ()
 mainGamePlay gs@(GamePlayState p e g) = do
     stdGen <- getStdGen
-<<<<<<< HEAD
-    let gamePlayState = GamePlayState {
-        playerState = (pikachu, []),
-        enemyState = (gengar, []),
-        gamePlayGen = stdGen
-    }
-    putStrLn $ "Battle Between" ++ (name $ fst $ playerState gamePlayState) ++ " and " ++ (name $ fst $ enemyState gamePlayState)
-    drawGameState (playerState gamePlayState) (enemyState gamePlayState) [] Player
-    win <- continueGamePlay gamePlayState
-=======
     putStrLn $ "Battle Between" ++ (name $ fst $ p) ++ " and " ++ (name $ fst $ e)
     drawGameState (p) (e) [] Player
     win <- continueGamePlay gs
->>>>>>> fbf4c503352d01f6bf8fb72208a11bcec61b1908
     if win then putStrLn "Player Win!!"
     else putStrLn "Player Lose!!"
     return ()

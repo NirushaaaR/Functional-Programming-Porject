@@ -8,7 +8,6 @@ import Pokemon.PokemonMove (Log (..), logToStr, splitLogs)
 import Util (AttackTurn (..))
 import Pokemon.PokemonStat (currentHp, maxHp)
 import Pokemon.BattleState (PokemonState)
-import Pokemon.Status (statusToColor)
 import Pokemon.PokemonInstance (getSprite)
 
 
@@ -63,8 +62,6 @@ resetScreen = do
     clearFromCursorToScreenBeginning
     setCursorPosition 0 0
     setSGR [Reset]
-<<<<<<< HEAD
-=======
 
 
 -----------------------start display----------------------
@@ -105,4 +102,3 @@ choosePokemonDisplay = do
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      -------------------------------------------------------------------------------------------------------"
->>>>>>> fbf4c503352d01f6bf8fb72208a11bcec61b1908

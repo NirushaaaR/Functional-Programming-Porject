@@ -16,8 +16,5 @@ statusAttachedDescription Paralyzed = " is now Paralyzed and might not move"
 statusAttachedDescription Burn = " is burnt by the fire"
 
 
-statusToColor :: Status -> Color
-statusToColor Flying = Cyan
-statusToColor Poison = Magenta
-statusToColor Paralyzed = Yellow
-statusToColor Burn = Red
+filterOutStatus :: Status -> [Status]  -> [Status]
+filterOutStatus filterOut = filter (\s -> s /= filterOut) 
