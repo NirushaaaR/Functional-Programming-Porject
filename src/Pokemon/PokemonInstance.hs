@@ -2,8 +2,11 @@ module Pokemon.PokemonInstance (
     charizard,
     blastoise,
     pikachu,
+    venusaur,
+    gengar,
+    golduck,
     getSprite,
-    gengar
+    
 ) where
 
 import Pokemon.PokemonInfo (PokemonInfo (..))
@@ -123,7 +126,7 @@ razorLeaf = Move {
 -- gengar --
 gengar = PokemonInfo {
     name="Gengar",
-    stats=(PokemonStats 1 1 17 8 13),
+    stats=(PokemonStats 65 65 17 8 13),
     pokemonType=Grass,
     moves=[confuseRay, shadowBall, lick]
 }
@@ -146,6 +149,32 @@ lick = Move {
     description="The foe is licked with a long tongue, causing damage. It may also paralyze the target."
 }
 -- gengar --
+-- golduck --
+golduck = PokemonInfo {
+    name="Golduck",
+    stats=(PokemonStats 78 78 13 16 13),
+    pokemonType=Water,
+    moves=[waterGun, waterProtect, ironTail]
+}
+waterGun = Move {
+    moveName="Water Gun",
+    moveEffect=[(DealDamage 55 0.0)],
+    accuracy=80,
+    description="Squirts water to attack."
+}
+waterProtect = Move {
+    moveName="Water Protect",
+    moveEffect=[(ChangeStats (StatsModifer 0.5 0.0 0.5 0.0) Self)],
+    accuracy=80,
+    description="A water will increase hitpoint and defend"
+}
+ironTail = Move {
+    moveName="Iron Tail",
+    moveEffect=[(ChangeStats (StatsModifer 0.0 0.0 0.8 0.0) Self)],
+    accuracy=80,
+    description="Tail will be stronger and increase defend"
+}
+-- golduck --
 
 ------ sprite --------
 getSprite :: String -> [String]
@@ -340,6 +369,45 @@ getSprite name =
     "        j__     _,'                         `-.'-.\"`",
     "          ',-.,' "
         ]
+    else if name =="Golduck" then 
+        [
+    "                              ,-'   ,\"\",",
+    "                             / / ,-'.-'",
+    "                   _,..-----+-\".\".-'_,..",
+    "           ,...,.\"'             `--.---'",
+    "         /,..,'                     `.",
+    "       ,'  .'                         `.",
+    "      j   /                             `.",
+    "      |  /,----._           ,.----.       .",
+    "     ,  j    _   \\        .'  .,   `.     |",
+    "   ,'   |        |  ____  |         | .\"--+,^.",
+    "  /     |`-....-',-'    `._`--....-' _/      |",
+    " /      |     _,'          `--..__  `        '",
+    "j       | ,-\"'    `    .'         `. `        `.",
+    "|        .\\                        /  |         \\",
+    "|         `\\                     ,'   |          \\",
+    "|          |                    |   ,-|           `.",
+    ".         ,'                    |-\"'  |             \\",
+    " \\       /                      `.    |              .",
+    "  ` /  ,'                        |    `              |",
+    "   /  /                          |     \\             |",
+    "  /  |                           |      \\           /",
+    " /   |                           |       `.       _,",
+    ".     .                         .'         `.__,.',.----,",
+    "|      `.                     ,'             .-\"\"      /",
+    "|        `._               _.'               |        /",
+    "|           `---.......,--\"                  |      ,'",
+    "'                                            '    ,'",
+    " \\                                          /   ,'",
+    "  \\                                        /  ,'",
+    "   \\                                      / ,'",
+    "    `.                                   ,+'",
+    "      >.                               ,'",
+    "  _.-'  `-.._                      _,-'-._",
+    ",__          `\",-............,.---\"       `.",
+    "   \\..---. _,-'            ,'               `.",
+    "          \"                '..,--.___,-\"\"\"---' "
+    ]
     else []
 
 

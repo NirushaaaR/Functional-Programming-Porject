@@ -63,8 +63,6 @@ resetScreen = do
     clearFromCursorToScreenBeginning
     setCursorPosition 0 0
     setSGR [Reset]
-<<<<<<< HEAD
-=======
 
 
 -----------------------start display----------------------
@@ -98,11 +96,10 @@ choosePokemonDisplay = do
     putStrLn "                                      |          |           |                    |           |                  |           |              |"
     putStrLn "                                      |            |_______|                        |_______|                      |_______|                |"
     putStrLn "                                      |                                                                                                     |"
-    putStrLn "                                      |           Pikachu [1]                      Blastoise[2]                   Charizard[3]              |"
+    putStrLn "                                      |           Venusaur [1]                      Blastoise[2]                   Charizard[3]              |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      |                                                                                                     |"
     putStrLn "                                      -------------------------------------------------------------------------------------------------------"
->>>>>>> fbf4c503352d01f6bf8fb72208a11bcec61b1908
