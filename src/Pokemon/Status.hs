@@ -14,6 +14,7 @@ statusAttachedDescription Flying = " is Flying up to the sky"
 statusAttachedDescription Poison = " is affected by Poison"
 statusAttachedDescription Paralyzed = " is now Paralyzed and might not move"
 statusAttachedDescription Burn = " is burnt by the fire"
+statusAttachedDescription Confuse = " is confused"
 
 
 filterOutStatus :: Status -> [Status]  -> [Status]

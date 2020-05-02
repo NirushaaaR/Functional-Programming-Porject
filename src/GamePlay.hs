@@ -9,11 +9,11 @@ import Control.Monad.Writer
 
 import Pokemon.PokemonInfo (PokemonInfo (..), isDead)
 import Pokemon.PokemonMove (Move (..), Log (..), MoveTarget (..))
-import Pokemon.PokemonStat (speed)
+import Pokemon.PokemonStat (PokemonStats (..))
 import Pokemon.BattleState
 import Pokemon.PokemonInstance 
 import Util (AttackTurn (..), randomTrigger, fromUnicode, toUnicode)
-import DrawScreen (drawGameState,startDisplay,choosePokemonDisplay)
+import DrawScreen (drawGameState, startDisplay, choosePokemonDisplay, resetScreen)
 
 
 type PlayerMoveAndEnemyMove = (Int, Int)
@@ -42,14 +42,14 @@ mainGamePlay gs@(GamePlayState p e g) = do
 
 continueGamePlay :: GamePlayState -> IO Bool
 continueGamePlay gs = do
-    -- savegame or loadgame
-    gs' <- saveOrLoad gs
-    let (GamePlayState player enemy g) = gs'
+    -- get input 
+    getPlayerInput gs
+    let (GamePlayState player enemy g) = gs
 
     drawGameState player enemy [] Player
 
     -- Choose Move for player and Enemy
-    (chosenMove, g') <- chooseMove player enemy g
+    (chosenMove, g') <- chooseAction gs
 
     -- determine who go first
     (playerFst, g'') <- return $ checkAttackFirst player enemy g'
@@ -101,33 +101,33 @@ endTurnAction (Left (GamePlayState (player, playerSt) (enemy,enemySt) g)) = do
     return $ playerWinOrGameNotEnd newGs
 
 
-saveOrLoad :: GamePlayState -> IO GamePlayState
-saveOrLoad gs = do
-    putStrLn "type (save) or type (load) game here, otherwise continue:"
+getPlayerInput :: GamePlayState -> IO GamePlayState
+getPlayerInput gs = do
+    putStrLn "type [S] to save or [L] to load game or [C] to choose move:"
     command <- fmap (map toLower) getLine
-    if command == "save" then do
+    if command == "s" then do
         save "save.dat" gs >>= putStrLn
-        saveOrLoad gs
-    else if command == "load" then do
+        getPlayerInput gs
+    else if command == "l" then do
         result <- load "save.dat"
         case result of 
             Right loaded -> do
                 putStrLn "load file successfully"
                 newGen <- newStdGen
-                let gs' = (GamePlayState (playerState loaded) (enemyState loaded) newGen)
-                saveOrLoad gs'
+                return (GamePlayState (playerState loaded) (enemyState loaded) newGen)
             Left err -> do
                 putStrLn err
-                saveOrLoad gs
-    else return gs
+                getPlayerInput gs
+    else if command == "c" then return gs
+    else getPlayerInput gs
 
 
-chooseMove :: PokemonState -> PokemonState -> StdGen -> IO (PlayerMoveAndEnemyMove, StdGen)
-chooseMove playerPk enemyPk stdGen = do
+chooseAction :: GamePlayState -> IO (PlayerMoveAndEnemyMove, StdGen)
+chooseAction (GamePlayState playerPk enemyPk stdGen) = do
     -- Choose Move for player
     playerChooseMove <- return $ canChooseMove playerPk
     playerMove <- if playerChooseMove then do
-                    putStr "Choose Your Move: "
+                    putStr "Choose Your Move by Number: "
                     showPokemonMove (moves $ fst playerPk)
                     choosePlayerMove (1,length $ moves $ fst playerPk)
                   else return 0
@@ -147,6 +147,7 @@ choosePlayerMove (minRange, maxRange) = do
     case readMaybe command :: Maybe Int of
         Nothing -> choosePlayerMove (minRange, maxRange)
         Just n -> if n < minRange || n > maxRange then choosePlayerMove (minRange, maxRange) else return n
+        
 
 drawGameState' :: GamePlayState -> [Log] -> AttackTurn -> IO ()
 drawGameState' (GamePlayState player enemy _) logs turn = do
@@ -189,32 +190,49 @@ load filePath = do
         (\e -> return $ Left $ "Couldn't load file "++(show e)) 
 
 ---------------------choose your pokemon--------------
-choose :: IO()
-choose = do
-    stdGen <- getStdGen
-    let pokemonName =  [venusaur, blastoise, charizard,pikachu,gengar,golduck]
-    choosePokemonDisplay
-    keyInput <- getLine
-    let checkKey = read keyInput :: Int
-    let (enemyRan,stdGen') = randomR (3,5) stdGen
-    if checkKey <= 3 && checkKey >0 then do
-        let gamePlayState = GamePlayState {
-            playerState = (pokemonName!!(checkKey-1),[]),
-            enemyState =  (pokemonName!!(enemyRan),[]),
-            gamePlayGen = stdGen'
-        }
-        mainGamePlay gamePlayState
-    else choose
+choosePokemon :: StdGen -> IO (PokemonInfo, StdGen)
+choosePokemon stdGen = do
+    let pokemonInstances =  [venusaur, blastoise, charizard, pikachu, gengar, golduck]
+    mapM_ pokemonDescription (zip pokemonInstances [0..])
+    putStrLn "choose pokemon number or [r] for random: "
+    keyInput <- fmap (map toLower) getLine
+    let checkKey = readMaybe keyInput :: Maybe Int
+    case checkKey of
+        Nothing -> do
+            if keyInput == "r" then
+                let (randomNum, g) = randomR (0,length pokemonInstances) stdGen
+                in return (pokemonInstances !! randomNum, g)
+            else choosePokemon stdGen
+        Just n -> do
+            if n >= (length pokemonInstances) then
+                choosePokemon stdGen
+            else return (pokemonInstances !! n, stdGen)
+
+
+pokemonDescription :: (PokemonInfo,Int) -> IO ()
+pokemonDescription (pk,index) = do
+    putStrLn $ "["++(show index)++"] Name: "++(name pk)
+    putStrLn "Move: "
+    mapM_ (\m -> putStrLn $ "\t"++(moveName m) ++ ": "++(description m)++ " acc: "++(show $ accuracy m)) (moves pk)
+    putStrLn $ "Stats: Hp " ++ (show $ maxHp $ stats pk) ++ " atk "++(show $ atk $ stats pk)++" def "++(show $ def $ stats pk)++" speed "++(show $ speed $ stats pk)
+    putStrLn $ take 100 $ cycle "="
 
 ----------------------Menu----------------------------
-menu :: IO ()
-menu = do  
+menu :: StdGen -> IO ()
+menu stdGen = do
+    resetScreen 
     startDisplay
-    putStrLn "Please select"
-    keyInput <- getLine
-    if keyInput == "s"|| keyInput == "S" then do
-        choose
-    else if keyInput == "l" || keyInput == "L" then do
+    putStrLn "Please select: "
+    keyInput <- fmap (map toLower) getLine
+    if keyInput == "s" then do
+        putStrLn "Choose Your Pokemon: "
+        (p1, g1) <- choosePokemon stdGen
+        putStrLn $ "Player Choose "++(name p1) ++ "\n"
+        putStrLn "Choose Enemy Pokemon: "
+        (p2, g2) <- choosePokemon g1
+        putStrLn $ "Choose "++(name p2) ++ "\n"
+        mainGamePlay (GamePlayState (p1,[]) (p2,[]) g2)
+    else if keyInput == "l"  then do
         result <- load "save.dat"
         case result of 
             Right loaded -> do
@@ -222,7 +240,8 @@ menu = do
                 mainGamePlay loaded
             Left err -> do
                 putStrLn err
+                menu stdGen
     else do
-        menu
+        menu stdGen
 
 

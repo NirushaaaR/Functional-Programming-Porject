@@ -71,22 +71,26 @@ actionByMoveEffect (ChangeStats mod target) bs = attackerChangeStats bs mod targ
 
 -- Attacker use move that AttachStatus
 actionByMoveEffect (AttachStatus st rate target) bs@(BattleState atker dfder g) = do
-    let (trigger, newGen) = randomTrigger g rate
-    if trigger then attackerSetStatus bs st target
+    if Flying `elem` (snd $ defender bs) then do
+        tell [NormalLog $ "Can't Do Anything, "++(show $ name $ fst $ defender bs)++" is Flying"]
+        return bs
     else do
-        tell [(StatusLog st ("Failed to attach "++(show st)) target)]
-        return (BattleState atker dfder newGen)
-        where
-            attackerSetStatus :: BattleState -> Status -> MoveTarget -> Writer [Log] BattleState
-            attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target = do
-                (newBs, isSet', pkName) <- return $ case target of  
-                    Self -> let (newAtkerSt, isSet) = setStatus atkerSt st
-                        in (BattleState (atker, newAtkerSt) (dfder, dfderSt) g, isSet, name atker)
-                    Opponent -> let (newDfderSt, isSet) = setStatus dfderSt st
-                        in (BattleState (atker, atkerSt) (dfder, newDfderSt) g, isSet, name dfder)
-                if (isSet') then tell [StatusLog st (pkName++(statusAttachedDescription st)) target]
-                else tell [StatusLog st (pkName++" is already "++(show st)) target]
-                return newBs
+        let (trigger, newGen) = randomTrigger g rate
+        if trigger then attackerSetStatus bs st target
+        else do
+            tell [(StatusLog st ("Failed to attach "++(show st)) target)]
+            return (BattleState atker dfder newGen)
+            where
+                attackerSetStatus :: BattleState -> Status -> MoveTarget -> Writer [Log] BattleState
+                attackerSetStatus (BattleState (atker, atkerSt) (dfder, dfderSt) g) st target = do
+                    (newBs, isSet', pkName) <- return $ case target of  
+                        Self -> let (newAtkerSt, isSet) = setStatus atkerSt st
+                            in (BattleState (atker, newAtkerSt) (dfder, dfderSt) g, isSet, name atker)
+                        Opponent -> let (newDfderSt, isSet) = setStatus dfderSt st
+                            in (BattleState (atker, atkerSt) (dfder, newDfderSt) g, isSet, name dfder)
+                    if (isSet') then tell [StatusLog st (pkName++(statusAttachedDescription st)) target]
+                    else tell [StatusLog st (pkName++" is already "++(show st)) target]
+                    return newBs
 
 
 canChooseMove :: PokemonState -> Bool

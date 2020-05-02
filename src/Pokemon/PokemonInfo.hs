@@ -31,4 +31,4 @@ calculateMoveDamage :: Int -> PokemonInfo -> PokemonInfo -> Int
 calculateMoveDamage movePower attacker defender = 
     let attackerAtk = atk $ stats attacker
         defenderDef = def $ stats defender
-    in movePower + attackerAtk - defenderDef
+    in movePower + ((attackerAtk - defenderDef) * 2)

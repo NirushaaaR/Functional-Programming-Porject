@@ -1,11 +1,11 @@
 module Main where
 
 import GamePlay
--- import DrawScreen
+import System.Random (getStdGen)
 
 
 main :: IO ()
-main = menu
+main = getStdGen >>= menu
     -- resetScreen
     -- drawLargeSprite (0, 0) (getSprite "Charizard")
     -- drawLargeSprite (0,90) (getSprite "Blastoise")

@@ -126,25 +126,25 @@ razorLeaf = Move {
 -- gengar --
 gengar = PokemonInfo {
     name="Gengar",
-    stats=(PokemonStats 65 65 17 8 13),
-    pokemonType=Grass,
+    stats=(PokemonStats 65 65 14 8 8),
+    pokemonType=Dark,
     moves=[confuseRay, shadowBall, lick]
 }
 confuseRay = Move {
     moveName="Confuse Ray",
-    moveEffect=[(AttachStatus Confuse (1,2)) Opponent],
-    accuracy=80,
+    moveEffect=[(AttachStatus Confuse (1,1) Opponent)],
+    accuracy=50,
     description="The target is exposed to a sinister ray that triggers confusion."
 }
 shadowBall = Move {
     moveName="Shadow Ball",
-    moveEffect=[(DealDamage 40 0.0)],
+    moveEffect=[(DealDamage 40 0.0), (ChangeStats (StatsModifer 0.0 0.0 (-0.3) 0.0) Opponent)],
     accuracy=60,
-    description="A reckless, life-risking tackle. This also damages the user quite a lot."
+    description="The user hurls a shadowy blob at the target. This will also lower the target's Def stat."
 }
 lick = Move {
     moveName="Lick",
-    moveEffect=[(DealDamage 15 0.0)],
+    moveEffect=[(DealDamage 15 0.0), (AttachStatus Paralyzed (1,3) Opponent)],
     accuracy=10,
     description="The foe is licked with a long tongue, causing damage. It may also paralyze the target."
 }
@@ -152,27 +152,27 @@ lick = Move {
 -- golduck --
 golduck = PokemonInfo {
     name="Golduck",
-    stats=(PokemonStats 78 78 13 16 13),
+    stats=(PokemonStats 78 78 10 7 8),
     pokemonType=Water,
-    moves=[waterGun, waterProtect, ironTail]
+    moves=[waterGun, screechMove, ironTail]
 }
 waterGun = Move {
     moveName="Water Gun",
-    moveEffect=[(DealDamage 55 0.0)],
-    accuracy=80,
-    description="Squirts water to attack."
+    moveEffect=[(DealDamage 25 0.0)],
+    accuracy=100,
+    description="The target is blasted with a forceful shot of water."
 }
-waterProtect = Move {
-    moveName="Water Protect",
-    moveEffect=[(ChangeStats (StatsModifer 0.5 0.0 0.5 0.0) Self)],
-    accuracy=80,
-    description="A water will increase hitpoint and defend"
+screechMove = Move {
+    moveName="Screech",
+    moveEffect=[(ChangeStats (StatsModifer 0.0 0.0 (-0.8) 0.0) Opponent)],
+    accuracy=85,
+    description="An earsplitting screech harshly lowers the target's Defense stat"
 }
 ironTail = Move {
     moveName="Iron Tail",
-    moveEffect=[(ChangeStats (StatsModifer 0.0 0.0 0.8 0.0) Self)],
-    accuracy=80,
-    description="Tail will be stronger and increase defend"
+    moveEffect=[(DealDamage 31 0.0), (ChangeStats (StatsModifer 0.0 0.0 (-0.2) 0.0) Opponent)],
+    accuracy=75,
+    description="Strikes the target with a stiff tail and lowering the target's Defense."
 }
 -- golduck --
 
