@@ -63,3 +63,46 @@ resetScreen = do
     clearFromCursorToScreenBeginning
     setCursorPosition 0 0
     setSGR [Reset]
+<<<<<<< HEAD
+=======
+
+
+-----------------------start display----------------------
+startDisplay = do
+    putStrLn "                                      -------------------------------------------------------------------------------------------------------"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"   
+    putStrLn "                                      |                                            Pokemon Game                                             |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                              Start[S]                                               |"
+    putStrLn "                                      |                                            Load Save[L]                                             |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      -------------------------------------------------------------------------------------------------------"
+
+---------------------------------choose pokemon display----------------------
+choosePokemonDisplay = do
+    putStrLn "                                      -------------------------------------------------------------------------------------------------------"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                       Choose Your Pokemon                                           |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |             #######                          #######                        #######                 |"
+    putStrLn "                                      |           ###########                      ###########                    ###########               |"
+    putStrLn "                                      |          #############                    #############                  #############              |"
+    putStrLn "                                      |         ###############                  ###############                ###############             |"
+    putStrLn "                                      |         |             |                  |             |                |             |             |"
+    putStrLn "                                      |          |           |                    |           |                  |           |              |"
+    putStrLn "                                      |            |_______|                        |_______|                      |_______|                |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |           Pikachu [1]                      Blastoise[2]                   Charizard[3]              |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      |                                                                                                     |"
+    putStrLn "                                      -------------------------------------------------------------------------------------------------------"
+>>>>>>> fbf4c503352d01f6bf8fb72208a11bcec61b1908
